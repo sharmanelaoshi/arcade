@@ -3,34 +3,30 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pickleball Tournament</title>
+<title>World Pickleball Tournament</title>
 <style>
   body { text-align: center; font-family: 'Segoe UI', sans-serif; background: #1a1a1a; color: white; margin: 0; overflow: hidden; }
   
-  /* Tournament Intro & Win Screens */
-  #intro, #game-over {
+  /* Tournament Overlays */
+  #intro, #game-over, #serve-overlay {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
     background: radial-gradient(circle, #2c3e50 0%, #000 100%); z-index: 10;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
   }
   
-  .tournament-header { font-size: 50px; color: #f1c40f; text-shadow: 0 0 20px rgba(241, 196, 15, 0.5); margin-bottom: 0; }
+  .tournament-header { font-size: 50px; color: #f1c40f; text-shadow: 0 0 20px rgba(241, 196, 15, 0.5); margin: 0; }
   
   .char-grid { display: flex; gap: 15px; margin: 15px; }
   .char-box { 
     padding: 10px; border: 3px solid #444; border-radius: 12px; cursor: pointer; 
     transition: 0.2s; background: #333; opacity: 0.5;
   }
-  /* Clear Visual Feedback for Selection */
   .char-box.selected { border-color: #f1c40f; background: #3b5fe2; opacity: 1; box-shadow: 0 0 20px #f1c40f; }
   .char-icon { font-size: 45px; display: block; }
 
   canvas { 
-    background: #2e7d32; /* Tournament Green */
-    border: 10px solid #ecf0f1; 
-    border-radius: 4px; 
-    cursor: grab; 
-    box-shadow: 0 0 50px rgba(0,0,0,0.8);
+    background: #2e7d32; border: 10px solid #ecf0f1; border-radius: 4px; 
+    cursor: grab; box-shadow: 0 0 50px rgba(0,0,0,0.8);
   }
   
   .scoreboard { 
@@ -54,10 +50,10 @@
 <body>
 
 <div id="intro">
-  <h1 class="tournament-header">🏆 WORLD ARCADE TOUR</h1>
-  <p style="color: #bdc3c7; letter-spacing: 3px;">PICKLEBALL CHAMPIONSHIP</p>
+  <h1 class="tournament-header">🏆 WORLD PICKLEBALL TOURNAMENT</h1>
+  <p style="color: #bdc3c7; letter-spacing: 3px;">CHAMPIONSHIP SERIES</p>
   
-  <div style="display:flex; gap: 80px; margin-top: 30px;">
+  <div style="display:flex; gap: 60px; margin-top: 20px;">
     <div>
       <h3 id="p1-label">ATHLETE 1: 🦁</h3>
       <div class="char-grid">
@@ -75,7 +71,12 @@
       </div>
     </div>
   </div>
-  <button onclick="startGame()" style="margin-top: 30px;">Enter Stadium</button>
+  <button onclick="startGame()" style="margin-top: 20px;">Enter Stadium</button>
+</div>
+
+<div id="serve-overlay" class="hidden">
+  <h2 id="serve-text" style="font-size: 40px; color: #f1c40f;">READY?</h2>
+  <button onclick="serveBall()">SERVE!</button>
 </div>
 
 <div id="game-over" class="hidden">
@@ -98,7 +99,8 @@ const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
 let gameRunning = false;
-let ball = { x: 400, y: 200, dx: 5, dy: 3, radius: 10 };
+let isWaitingForServe = false;
+let ball = { x: 400, y: 200, dx: 0, dy: 0, radius: 10, baseSpeed: 4.5 };
 let p1 = { x: 25, y: 160, w: 12, h: 80, char: '🦁' };
 let p2 = { x: 763, y: 160, w: 12, h: 80, char: '👽' };
 let p1Score = 0, p2Score = 0;
@@ -117,26 +119,40 @@ function playSound(freq, type = 'square', vol = 0.1) {
 
 function selectChar(player, icon, element) {
   playSound(500, 'sine', 0.05);
-  const grid = element.parentElement;
-  const boxes = grid.getElementsByClassName('char-box');
+  const boxes = element.parentElement.getElementsByClassName('char-box');
   for (let box of boxes) box.classList.remove('selected');
   element.classList.add('selected');
-  
   if (player === 1) {
-    p1.char = icon;
-    document.getElementById('p1-label').textContent = "ATHLETE 1: " + icon;
+    p1.char = icon; document.getElementById('p1-label').textContent = "ATHLETE 1: " + icon;
     document.getElementById('p1-display').textContent = icon;
   } else {
-    p2.char = icon;
-    document.getElementById('p2-label').textContent = "ATHLETE 2: " + icon;
+    p2.char = icon; document.getElementById('p2-label').textContent = "ATHLETE 2: " + icon;
     document.getElementById('p2-display').textContent = icon;
   }
 }
 
 function startGame() {
-  playSound(800, 'sine');
   document.getElementById('intro').classList.add('hidden');
+  prepareServe();
+}
+
+function prepareServe() {
+  gameRunning = false;
+  isWaitingForServe = true;
+  document.getElementById('serve-overlay').classList.remove('hidden');
+  document.getElementById('serve-text').textContent = (p1Score + p2Score === 0) ? "TOURNAMENT START" : "POINT OVER";
+  ball.x = 400; ball.y = 200;
+  ball.dx = 0; ball.dy = 0;
+}
+
+function serveBall() {
+  document.getElementById('serve-overlay').classList.add('hidden');
+  isWaitingForServe = false;
   gameRunning = true;
+  // Reset to base speed so it's not too fast
+  ball.dx = (p1Score >= p2Score ? -ball.baseSpeed : ball.baseSpeed);
+  ball.dy = (Math.random() - 0.5) * 5;
+  playSound(600, 'sine');
 }
 
 let dragging = null;
@@ -156,46 +172,23 @@ canvas.addEventListener('mousemove', (e) => {
 canvas.addEventListener('mouseup', () => dragging = null);
 
 function drawCourt() {
-  // Turf
-  ctx.fillStyle = '#2e7d32';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  // Boundary Lines
-  ctx.strokeStyle = "white";
-  ctx.lineWidth = 4;
+  ctx.fillStyle = '#2e7d32'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.strokeStyle = "white"; ctx.lineWidth = 4;
   ctx.strokeRect(15, 15, canvas.width - 30, canvas.height - 30);
-
-  // Tournament Kitchen (Non-Volley Zone)
-  ctx.lineWidth = 2;
-  ctx.strokeRect(canvas.width/2 - 90, 15, 180, canvas.height - 30);
-
-  // Center Lines
+  ctx.lineWidth = 2; ctx.strokeRect(canvas.width/2 - 90, 15, 180, canvas.height - 30);
   ctx.beginPath();
   ctx.moveTo(15, canvas.height/2); ctx.lineTo(canvas.width/2 - 90, canvas.height/2);
   ctx.moveTo(canvas.width/2 + 90, canvas.height/2); ctx.lineTo(canvas.width - 15, canvas.height/2);
   ctx.stroke();
-
-  // The Net
-  ctx.strokeStyle = "rgba(0,0,0,0.8)";
-  ctx.lineWidth = 6;
-  ctx.beginPath();
-  ctx.moveTo(canvas.width/2, 10); ctx.lineTo(canvas.width/2, canvas.height - 10);
+  ctx.strokeStyle = "rgba(0,0,0,0.8)"; ctx.lineWidth = 6;
+  ctx.beginPath(); ctx.moveTo(canvas.width/2, 10); ctx.lineTo(canvas.width/2, canvas.height - 10);
   ctx.stroke();
 }
 
 function drawBall() {
-  ctx.beginPath();
-  ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI*2);
-  ctx.fillStyle = '#ccff00'; // Neon
-  ctx.shadowBlur = 15; ctx.shadowColor = '#ccff00';
-  ctx.fill();
-  ctx.shadowBlur = 0;
-  
-  // Wiffle Holes
-  ctx.fillStyle = 'rgba(0,0,0,0.3)';
-  for(let i=0; i<4; i++) {
-    ctx.beginPath(); ctx.arc(ball.x + (i-1.5)*5, ball.y + (i%2==0?3:-3), 2, 0, Math.PI*2); ctx.fill();
-  }
+  ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI*2);
+  ctx.fillStyle = '#ccff00'; ctx.shadowBlur = 15; ctx.shadowColor = '#ccff00';
+  ctx.fill(); ctx.shadowBlur = 0;
 }
 
 function update() {
@@ -203,11 +196,9 @@ function update() {
   ball.x += ball.dx; ball.y += ball.dy;
 
   if (ball.y < 25 || ball.y > canvas.height - 25) {
-    ball.dy *= -1;
-    playSound(400, 'sine', 0.05);
+    ball.dy *= -1; playSound(400, 'sine', 0.05);
   }
 
-  // Collisions
   if (ball.dx < 0 && ball.x < p1.x + p1.w && ball.y > p1.y && ball.y < p1.y + p1.h) {
     ball.dx = Math.abs(ball.dx) * 1.05; playSound(600);
   }
@@ -215,7 +206,6 @@ function update() {
     ball.dx = -Math.abs(ball.dx) * 1.05; playSound(600);
   }
 
-  // Out / Score
   if (ball.x < 0 || ball.x > canvas.width) {
     if (ball.x < 0) p2Score++; else p1Score++;
     playSound(100, 'sawtooth');
@@ -227,10 +217,9 @@ function update() {
       document.getElementById('game-over').classList.remove('hidden');
       document.getElementById('winner-text').innerHTML = (p1Score >= 5 ? p1.char : p2.char) + " IS THE CHAMPION!";
     } else {
-      ball.x = 400; ball.y = 200; ball.dx = (p1Score > p2Score ? -5 : 5);
+      prepareServe();
     }
   }
-
   document.getElementById('p1-score').textContent = p1Score;
   document.getElementById('p2-score').textContent = p2Score;
 }
@@ -243,7 +232,6 @@ function loop() {
   update();
   requestAnimationFrame(loop);
 }
-
 loop();
 </script>
 </body>
