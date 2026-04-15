@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Job Voice Race: Mario Edition</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #5C94FC; /* Classic Mario Sky Blue */
+            font-family: 'Courier New', Courier, monospace;
+            text-align: center;
+        }
+        /* Grass/Hills Background */
+        .background-hills {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 150px;
+            background: #22B14C;
+            border-top: 10px solid #005800;
+        }
+        #finish-line {
+            position: absolute;
+            top: 80px;
+            width: 100%;
+            height: 20px;
+            background: repeating-linear-gradient(90deg, #fff, #fff 20px, #f00 20px, #f00 40px);
+            border: 4px solid #000;
+            z-index: 5;
+        }
+        .track {
+            position: absolute;
+            bottom: 0;
+            width: 50%;
+            height: 100%;
+            border-right: 4px dashed white;
+        }
+        #p2-track { left: 50%; border-right: none; }
+        
+        .player {
+            position: absolute;
+            bottom: 150px; /* Start above the grass */
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 100px;
+            transition: bottom 0.1s ease-out;
+            z-index: 10;
+        }
+        .label {
+            position: absolute;
+            top: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 3px 3px #000;
+            width: 100%;
+        }
+        #timer {
+            position: fixed;
+            top: 110px;
+            width: 100%;
+            font-size: 40px;
+            color: yellow;
+            text-shadow: 3px 3px #000;
+            z-index: 20;
+        }
+        #controls {
+            position: fixed;
+            bottom: 40px;
+            width: 100%;
+            z-index: 100;
+        }
+        button {
+            padding: 20px 40px;
+            font-size: 24px;
+            cursor: pointer;
+            background: #E74C3C;
+            color: white;
+            border: 5px solid white;
+            border-radius: 10px;
+            box-shadow: 0 5px #c0392b;
+        }
+        button:active { transform: translateY(4px); box-shadow: 0 2px #c0392b; }
+    </style>
+</head>
+<body>
+
+    <div id="finish-line"></div>
+    <div id="timer">TIME: 0.0s</div>
+
+    <div class="track" id="p1-track">
+        <div class="label">P1: FIREFIGHTER</div>
+        <div id="p1" class="player">🚒</div>
+    </div>
+
+    <div class="track" id="p2-track">
+        <div class="label">P2: POLICE OFFICER</div>
+        <div id="p2" class="player">🚓</div>
+    </div>
+
+    <div class="background-hills"></div>
+
+    <div id="controls">
+        <button onclick="startRace()">START THE BATTLE!</button>
+    </div>
+
+<script>
+    let p1Height = 150;
+    let p2Height = 150;
+    let racing = false;
+    let startTime;
+    let timerInterval;
+
+    async function startRace() {
+        document.querySelector('button').style.display = 'none';
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const analyser = audioContext.createAnalyser();
+        const source = audioContext.createMediaStreamSource(stream);
+        source.connect(analyser);
+        analyser.fftSize = 256;
+        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+        racing = true;
+        startTime = Date.now();
+        
+        // Start the visible timer
+        timerInterval = setInterval(() => {
+            let elapsed = (Date.now() - startTime) / 1000;
+            document.getElementById('timer').innerText = `TIME: ${elapsed.toFixed(1)}s`;
+        }, 100);
+
+        function update() {
+            if (!racing) return;
+            analyser.getByteFrequencyData(dataArray);
+            let volume = dataArray.reduce((a, b) => a + b) / dataArray.length;
+
+            if (volume > 45) { 
+                // In a classroom, Team 1 shouts then Team 2 shouts
+                // Use these multipliers to adjust speed
+                p1Height += (volume / 15); 
+                p2Height += (volume / 18); 
+            }
+
+            document.getElementById('p1').style.bottom = p1Height + 'px';
+            document.getElementById('p2').style.bottom = p2Height + 'px';
+
+            const winLine = window.innerHeight - 180;
+            if (p1Height > winLine || p2Height > winLine) {
+                racing = false;
+                clearInterval(timerInterval);
+                let winner = p1Height > p2Height ? "TEAM 1 (FIREFIGHTER)" : "TEAM 2 (POLICE)";
+                alert(`FINISHED! \nWinner: ${winner} \nTime: ${document.getElementById('timer').innerText}`);
+                reset();
+            }
+
+            requestAnimationFrame(update);
+        }
+        update();
+    }
+
+    function reset() {
+        p1Height = 150;
+        p2Height = 150;
+        document.querySelector('button').style.display = 'inline-block';
+        document.getElementById('p1').style.bottom = '150px';
+        document.getElementById('p2').style.bottom = '150px';
+    }
+</script>
+</body>
+</html>
