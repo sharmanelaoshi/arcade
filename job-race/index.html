@@ -2,118 +2,114 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Job Voice Race: Mario Edition</title>
+    <title>Job Time Trial - Mario Style</title>
     <style>
         body {
             margin: 0;
             overflow: hidden;
-            background: #5C94FC; /* Classic Mario Sky Blue */
+            background: #5C94FC; /* Mario Sky */
             font-family: 'Courier New', Courier, monospace;
             text-align: center;
         }
-        /* Grass/Hills Background */
-        .background-hills {
-            position: absolute;
-            bottom: 0;
-            width: 100%;
-            height: 150px;
-            background: #22B14C;
-            border-top: 10px solid #005800;
-        }
         #finish-line {
             position: absolute;
-            top: 80px;
+            top: 100px;
             width: 100%;
             height: 20px;
             background: repeating-linear-gradient(90deg, #fff, #fff 20px, #f00 20px, #f00 40px);
             border: 4px solid #000;
-            z-index: 5;
         }
-        .track {
-            position: absolute;
-            bottom: 0;
-            width: 50%;
-            height: 100%;
-            border-right: 4px dashed white;
+        #timer-display {
+            font-size: 50px;
+            color: yellow;
+            text-shadow: 4px 4px #000;
+            margin-top: 20px;
         }
-        #p2-track { left: 50%; border-right: none; }
-        
-        .player {
+        .player-sprite {
             position: absolute;
-            bottom: 150px; /* Start above the grass */
+            bottom: 120px;
             left: 50%;
             transform: translateX(-50%);
-            font-size: 100px;
+            font-size: 120px;
             transition: bottom 0.1s ease-out;
             z-index: 10;
         }
-        .label {
+        .grass {
             position: absolute;
-            top: 20px;
-            font-size: 28px;
-            font-weight: bold;
-            color: white;
-            text-shadow: 3px 3px #000;
+            bottom: 0;
             width: 100%;
+            height: 120px;
+            background: #22B14C;
+            border-top: 8px solid #005800;
         }
-        #timer {
+        #menu {
             position: fixed;
-            top: 110px;
+            top: 130px;
             width: 100%;
-            font-size: 40px;
-            color: yellow;
-            text-shadow: 3px 3px #000;
-            z-index: 20;
-        }
-        #controls {
-            position: fixed;
-            bottom: 40px;
-            width: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 10px 0;
             z-index: 100;
         }
-        button {
-            padding: 20px 40px;
-            font-size: 24px;
+        .job-btn {
+            padding: 10px;
+            margin: 5px;
+            font-size: 16px;
             cursor: pointer;
+            background: white;
+            border: 2px solid #333;
+            border-radius: 5px;
+        }
+        .job-btn:hover { background: #ffff00; }
+        #start-btn {
+            padding: 20px 50px;
+            font-size: 30px;
             background: #E74C3C;
             color: white;
             border: 5px solid white;
-            border-radius: 10px;
-            box-shadow: 0 5px #c0392b;
+            border-radius: 15px;
+            cursor: pointer;
+            margin-top: 20px;
         }
-        button:active { transform: translateY(4px); box-shadow: 0 2px #c0392b; }
     </style>
 </head>
 <body>
 
+    <div id="timer-display">TIME: 0.00s</div>
     <div id="finish-line"></div>
-    <div id="timer">TIME: 0.0s</div>
 
-    <div class="track" id="p1-track">
-        <div class="label">P1: FIREFIGHTER</div>
-        <div id="p1" class="player">🚒</div>
+    <div id="menu">
+        <p><strong>CHOOSE A JOB:</strong></p>
+        <button class="job-btn" onclick="setJob('🚒', 'Firefighter')">Firefighter</button>
+        <button class="job-btn" onclick="setJob('🚓', 'Police Officer')">Police Officer</button>
+        <button class="job-btn" onclick="setJob('⚾', 'Baseball Player')">Baseball Player</button>
+        <button class="job-btn" onclick="setJob('🚐', 'Reporter')">Reporter</button>
+        <button class="job-btn" onclick="setJob('🧪', 'Scientist')">Scientist</button>
+        <button class="job-btn" onclick="setJob('🎤', 'Singer')">Singer</button>
+        <button class="job-btn" onclick="setJob('📷', 'YouTuber')">YouTuber</button>
+        <button class="job-btn" onclick="setJob('📏', 'Engineer')">Engineer</button>
+        <br>
+        <button id="start-btn" onclick="startTrial()">START!</button>
     </div>
 
-    <div class="track" id="p2-track">
-        <div class="label">P2: POLICE OFFICER</div>
-        <div id="p2" class="player">🚓</div>
-    </div>
-
-    <div class="background-hills"></div>
-
-    <div id="controls">
-        <button onclick="startRace()">START THE BATTLE!</button>
-    </div>
+    <div id="sprite" class="player-sprite">🚒</div>
+    <div class="grass"></div>
 
 <script>
-    let p1Height = 150;
-    let p2Height = 150;
+    let currentHeight = 120;
     let racing = false;
     let startTime;
     let timerInterval;
+    let currentJobName = "Firefighter";
 
-    async function startRace() {
-        document.querySelector('button').style.display = 'none';
+    function setJob(emoji, name) {
+        document.getElementById('sprite').innerText = emoji;
+        currentJobName = name;
+        resetGame();
+    }
+
+    async function startTrial() {
+        document.getElementById('menu').style.display = 'none';
+        
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         const analyser = audioContext.createAnalyser();
@@ -124,48 +120,41 @@
 
         racing = true;
         startTime = Date.now();
-        
-        // Start the visible timer
+
         timerInterval = setInterval(() => {
             let elapsed = (Date.now() - startTime) / 1000;
-            document.getElementById('timer').innerText = `TIME: ${elapsed.toFixed(1)}s`;
-        }, 100);
+            document.getElementById('timer-display').innerText = `TIME: ${elapsed.toFixed(2)}s`;
+        }, 10);
 
         function update() {
             if (!racing) return;
             analyser.getByteFrequencyData(dataArray);
             let volume = dataArray.reduce((a, b) => a + b) / dataArray.length;
 
-            if (volume > 45) { 
-                // In a classroom, Team 1 shouts then Team 2 shouts
-                // Use these multipliers to adjust speed
-                p1Height += (volume / 15); 
-                p2Height += (volume / 18); 
+            if (volume > 40) { 
+                currentHeight += (volume / 12); // Adjust speed here
             }
 
-            document.getElementById('p1').style.bottom = p1Height + 'px';
-            document.getElementById('p2').style.bottom = p2Height + 'px';
+            document.getElementById('sprite').style.bottom = currentHeight + 'px';
 
-            const winLine = window.innerHeight - 180;
-            if (p1Height > winLine || p2Height > winLine) {
+            const winLine = window.innerHeight - 150;
+            if (currentHeight > winLine) {
                 racing = false;
                 clearInterval(timerInterval);
-                let winner = p1Height > p2Height ? "TEAM 1 (FIREFIGHTER)" : "TEAM 2 (POLICE)";
-                alert(`FINISHED! \nWinner: ${winner} \nTime: ${document.getElementById('timer').innerText}`);
-                reset();
+                let finalTime = document.getElementById('timer-display').innerText;
+                alert(`GREAT JOB! \n${currentJobName} finished in ${finalTime}`);
+                document.getElementById('menu').style.display = 'block';
+                resetGame();
             }
-
             requestAnimationFrame(update);
         }
         update();
     }
 
-    function reset() {
-        p1Height = 150;
-        p2Height = 150;
-        document.querySelector('button').style.display = 'inline-block';
-        document.getElementById('p1').style.bottom = '150px';
-        document.getElementById('p2').style.bottom = '150px';
+    function resetGame() {
+        currentHeight = 120;
+        document.getElementById('sprite').style.bottom = '120px';
+        document.getElementById('timer-display').innerText = "TIME: 0.00s";
     }
 </script>
 </body>
