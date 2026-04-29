@@ -1,116 +1,123 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
+    <title>Where are you going? - Monopoly</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Where are you going?</title>
     <style>
-        :root { --blue: #2196F3; --green: #4CAF50; --gold: #FFC107; }
-        body { font-family: 'Arial', sans-serif; background-color: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        h1 { color: #333; margin-bottom: 10px; }
+        body { font-family: 'Comic Sans MS', cursive, sans-serif; text-align: center; background-color: #f0f0f0; }
         
-        /* Monopoly Board Layout */
-        .board {
+        /* This creates the 3x3 Grid Board */
+        .monopoly-board {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             grid-template-rows: repeat(3, 1fr);
-            gap: 10px;
-            width: 320px;
-            height: 320px;
-            margin: 20px;
+            width: 350px;
+            height: 350px;
+            margin: 30px auto;
+            border: 5px solid #333;
+            background-color: white;
         }
-        
-        .spot {
-            background: white;
-            border: 3px solid #ccc;
-            border-radius: 8px;
+
+        .square {
+            border: 2px solid #333;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             font-size: 14px;
             font-weight: bold;
-            text-align: center;
-            transition: all 0.3s;
+            padding: 5px;
+            background: #fff;
         }
+
+        /* The center of the board where the dice is */
+        .center-square {
+            background-color: #d4f1f4;
+            font-size: 50px;
+            grid-column: 2;
+            grid-row: 2;
+        }
+
+        /* Color coding the spots */
+        #s0 { border-top: 10px solid #ff4d4d; } /* Park */
+        #s1 { border-top: 10px solid #ff4d4d; } /* Library */
+        #s2 { border-right: 10px solid #4dff4d; } /* Hospital */
+        #s3 { border-bottom: 10px solid #4dff4d; } /* Supermarket */
+        #s4 { border-bottom: 10px solid #4d4dff; } /* Bookstore */
+        #s5 { border-bottom: 10px solid #4d4dff; } /* Tea Shop */
+        #s6 { border-left: 10px solid #ffff4d; } /* Post Office */
+        #s7 { border-top: 10px solid #ffff4d; } /* Zoo */
 
         .active {
-            border-color: var(--blue);
-            background-color: #e3f2fd;
+            background-color: #ffeb3b !important;
             transform: scale(1.1);
-            box-shadow: 0 0 15px rgba(33, 150, 243, 0.5);
+            z-index: 10;
+            box-shadow: 0 0 15px rgba(0,0,0,0.3);
         }
 
-        .center { border: none; background: transparent; font-size: 40px; }
-
-        /* Controls */
-        .controls { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
-        button { background: var(--green); color: white; border: none; padding: 15px 30px; font-size: 18px; border-radius: 50px; cursor: pointer; width: 100%; transition: 0.2s; }
-        button:hover { background: #45a049; }
-        button:active { transform: scale(0.98); }
-
-        #sentence-box { margin-top: 20px; padding: 15px; border-left: 5px solid var(--blue); background: #f9f9f9; min-height: 50px; font-size: 20px; }
-        .highlight { color: var(--blue); font-weight: bold; }
+        button {
+            padding: 15px 30px;
+            font-size: 20px;
+            background-color: #268bd2;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        
+        #sentence {
+            font-size: 24px;
+            margin-top: 20px;
+            color: #2c3e50;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
 
     <h1>🗺️ Where are you going?</h1>
-    
-    <div class="board">
-        <div class="spot" id="s0">Park<br>公園</div>
-        <div class="spot" id="s1">Library<br>圖書館</div>
-        <div class="spot" id="s2">Hospital<br>醫院</div>
-        <div class="spot" id="s7">Zoo<br>動物園</div>
-        <div class="spot center" id="dice">🎲</div>
-        <div class="spot" id="s3">Supermarket<br>超市</div>
-        <div class="spot" id="s6">Post Office<br>郵局</div>
-        <div class="spot" id="s5">Tea Shop<br>飲料店</div>
-        <div class="spot" id="s4">Bookstore<br>書店</div>
+
+    <div class="monopoly-board">
+        <div class="square" id="s0">Park<br>公園</div>
+        <div class="square" id="s1">Library<br>圖書館</div>
+        <div class="square" id="s2">Hospital<br>醫院</div>
+        
+        <div class="square" id="s7">Zoo<br>動物園</div>
+        <div class="square center-square" id="dice">🎲</div>
+        <div class="square" id="s3">Supermarket<br>超市</div>
+
+        <div class="square" id="s6">Post Office<br>郵局</div>
+        <div class="square" id="s5">Tea Shop<br>飲料店</div>
+        <div class="square" id="s4">Bookstore<br>書店</div>
     </div>
 
-    <div class="controls">
-        <button onclick="roll()">Roll the Dice!</button>
-        <div id="sentence-box">Click the button to start!</div>
-    </div>
+    <button onclick="roll()">Roll Dice!</button>
+
+    <div id="sentence">Click to start!</div>
 
     <script>
-        const places = [
-            "Park", "Library", "Hospital", "Supermarket", 
-            "Bookstore", "Tea Shop", "Post Office", "Zoo"
-        ];
+        const places = ["Park", "Library", "Hospital", "Supermarket", "Bookstore", "Tea Shop", "Post Office", "Zoo"];
         let currentPos = -1;
 
         function roll() {
-            // Roll animation
-            const diceEl = document.getElementById('dice');
-            diceEl.style.transform = "rotate(360deg)";
-            
-            const rollValue = Math.floor(Math.random() * 6) + 1;
-            
-            setTimeout(() => {
-                diceEl.style.transform = "rotate(0deg)";
-                diceEl.innerText = getDiceIcon(rollValue);
-                
-                // Remove old highlight
-                if (currentPos !== -1) document.getElementById('s' + currentPos).classList.remove('active');
-                
-                // Calculate new position
-                currentPos = (currentPos + rollValue) % places.length;
-                
-                // Add new highlight
-                document.getElementById('s' + currentPos).classList.add('active');
-                
-                // Update Sentence
-                const box = document.getElementById('sentence-box');
-                box.innerHTML = `You rolled a ${rollValue}!<br>I am going to the <span class="highlight">${places[currentPos]}</span>.`;
-            }, 300);
-        }
+            // Remove previous highlight
+            if (currentPos !== -1) document.getElementById('s' + currentPos).classList.remove('active');
 
-        function getDiceIcon(num) {
-            const icons = ["", "⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
-            return icons[num];
+            // Roll
+            const move = Math.floor(Math.random() * 6) + 1;
+            document.getElementById('dice').innerText = move;
+
+            // Move
+            currentPos = (currentPos + move) % places.length;
+
+            // Show highlight
+            document.getElementById('s' + currentPos).classList.add('active');
+
+            // Show sentence
+            document.getElementById('sentence').innerHTML = 
+                `I am going to the <span style="color:red">${places[currentPos]}</span>.`;
         }
     </script>
+
 </body>
 </html>
