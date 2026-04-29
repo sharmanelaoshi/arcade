@@ -1,104 +1,180 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Grade 5 Adventure</title>
+    <title>3-Player Smart Shopper</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { font-family: 'Arial Rounded MT Bold', sans-serif; background: #55efc4; padding: 20px; }
-        #status-bar { background: white; padding: 15px; border-radius: 50px; display: flex; justify-content: space-around; margin-bottom: 20px; border: 4px solid #00b894; font-size: 20px; }
+        body { font-family: 'Arial Rounded MT Bold', sans-serif; background: #55efc4; text-align: center; padding: 10px; }
+        #setup, #game-ui, #shop-ui { background: white; padding: 15px; border-radius: 15px; border: 4px solid #00b894; margin-bottom: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         
-        .board { 
-            display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); 
-            width: 400px; height: 400px; margin: auto; background: #dfe6e9; border: 6px solid #2d3436;
-        }
+        .board { display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); width: 360px; height: 360px; margin: auto; background: white; border: 5px solid #2d3436; gap: 5px; padding: 5px; }
+        .square { border: 2px solid #dfe6e9; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 11px; cursor: pointer; background: #fff; position: relative; }
+        .middle { grid-column: 2 / 4; grid-row: 2 / 4; background: #00b894; display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 10px; color: white; }
         
-        .square { 
-            background: white; border: 1px solid #636e72; display: flex; flex-direction: column; 
-            justify-content: center; align-items: center; font-size: 12px; position: relative;
-        }
-
-        .middle { grid-column: 2 / 4; grid-row: 2 / 4; display: flex; flex-direction: column; justify-content: center; align-items: center; background: #fab1a0; }
+        .p-marker { font-size: 24px; position: absolute; transition: all 0.3s; text-shadow: 1px 1px 2px black; }
         
-        .active { background: #fdffb6 !important; border: 4px solid #ff9f43; z-index: 5; transform: scale(1.05); }
+        .player-box { display: inline-block; width: 30%; padding: 5px; border: 2px solid #ddd; border-radius: 10px; font-size: 11px; }
+        .current-turn { border-color: #d63031; background: #ffeaa7; }
         
-        button { padding: 15px 30px; font-size: 18px; border-radius: 30px; border: none; background: #0984e3; color: white; cursor: pointer; box-shadow: 0 5px #074b81; }
-        button:active { transform: translateY(4px); box-shadow: 0 0; }
-
-        #story-log { margin-top: 20px; background: #2d3436; color: #55efc4; padding: 15px; border-radius: 15px; height: 100px; overflow-y: auto; text-align: left; font-family: monospace; }
-        .money-plus { color: #55efc4; font-weight: bold; }
-        .money-minus { color: #ff7675; font-weight: bold; }
+        button { padding: 10px 20px; font-size: 16px; border-radius: 20px; border: none; background: #0984e3; color: white; cursor: pointer; font-weight: bold; margin: 5px; }
+        .btn-buy { background: #00b894; margin: 5px; width: 80%; }
+        
+        #shop-ui { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 100; width: 280px; }
     </style>
 </head>
 <body>
 
-<div id="status-bar">
-    <span>💰 $<span id="money">500</span></span>
-    <span>⭐ Score: <span id="score">0</span></span>
+<div id="setup">
+    <h3>3-Player Setup</h3>
+    P1: <select id="p0-av"><option>🐱</option><option>🐶</option></select>
+    P2: <select id="p1-av"><option>🐰</option><option>🦊</option></select>
+    P3: <select id="p2-av"><option>🐯</option><option>🐨</option></select>
+    <br><br><button onclick="startGame()">START QUEST</button>
 </div>
 
-<div class="board">
-    <div class="square" id="s0">🌳<br>Park</div>
-    <div class="square" id="s1">📚<br>Library</div>
-    <div class="square" id="s2">🏥<br>Hospital</div>
-    <div class="square" id="s3">🛒<br>Market</div>
-    
-    <div class="square" id="s7">🦁<br>Zoo</div>
-    <div class="middle">
-        <div id="dice-ui" style="font-size: 50px;">🎲</div>
-        <button onclick="play()">ROLL!</button>
+<div id="game-ui" style="display:none">
+    <div id="player-stats">
+        <div class="player-box" id="box-0">P1 <span id="p0-icon"></span><br>$<span id="p0-m">500</span><br>Items: <span id="p0-c">0</span>/8</div>
+        <div class="player-box" id="box-1">P2 <span id="p1-icon"></span><br>$<span id="p1-m">500</span><br>Items: <span id="p1-c">0</span>/8</div>
+        <div class="player-box" id="box-2">P3 <span id="p2-icon"></span><br>$<span id="p2-m">500</span><br>Items: <span id="p2-c">0</span>/8</div>
     </div>
-    <div class="square" id="s4">📖<br>Books</div>
-    
-    <div class="square" id="s6">📮<br>Post</div>
-    <div class="square" id="s5">🧋<br>Tea</div>
-    <div class="square" style="background:#b2bec3">GO</div>
-    <div class="square" style="background:#b2bec3">FREE</div>
+    <div id="msg" style="margin-top:10px; font-weight:bold;">P1: Roll to move!</div>
 </div>
 
-<div id="story-log">> Welcome, Teacher Mariel! Roll to start the day.</div>
+<div class="board" id="main-board" style="display:none">
+    <div class="square" id="s0" onclick="handleTap(0)">Park🚲</div>
+    <div class="square" id="s1" onclick="handleTap(1)">Library📖</div>
+    <div class="square" id="s2" onclick="handleTap(2)">Hospital💊</div>
+    <div class="square" id="s3" onclick="handleTap(3)">Market🍎</div>
+    <div class="square" id="s7" onclick="handleTap(7)">Zoo🦁</div>
+    <div class="middle"><div id="dice-val">🎲</div><button id="rollBtn" onclick="roll()">ROLL</button></div>
+    <div class="square" id="s4" onclick="handleTap(4)">Bookstore📚</div>
+    <div class="square" id="s6" onclick="handleTap(6)">Post Office✉️</div>
+    <div class="square" id="s5" onclick="handleTap(5)">Tea Shop🧋</div>
+    <div class="square" style="background:#eee">GO</div>
+    <div class="square" style="background:#eee">FREE</div>
+</div>
+
+<div id="shop-ui">
+    <h3 id="shop-name">Shop</h3>
+    <p>Choose one item to buy:</p>
+    <div id="shop-options"></div>
+</div>
 
 <script>
-    let money = 500;
-    let score = 0;
-    let pos = -1;
-    const log = document.getElementById('story-log');
+    let players = [
+        { pos: -1, money: 500, items: new Set(), avatar: '' },
+        { pos: -1, money: 500, items: new Set(), avatar: '' },
+        { pos: -1, money: 500, items: new Set(), avatar: '' }
+    ];
+    let turn = 0, rollVal = 0, targetPos = -1;
 
-    const events = [
-        { name: "Park", msg: "You found a lost wallet! +$50", cash: 50, pts: 10 },
-        { name: "Library", msg: "Late fees! Pay $20.", cash: -20, pts: 5 },
-        { name: "Hospital", msg: "Vitamin boost! Feel great. -$40", cash: -40, pts: 20 },
-        { name: "Supermarket", msg: "Ice cream sale! Buy some. -$10", cash: -10, pts: 5 },
-        { name: "Bookstore", msg: "Sold a used book! +$30", cash: 30, pts: 15 },
-        { name: "Tea Shop", msg: "Bought Pearl Milk Tea! -$60", cash: -60, pts: 10 },
-        { name: "Post Office", msg: "Sent a gift to Mariza! -$30", cash: -30, pts: 25 },
-        { name: "Zoo", msg: "The monkeys stole your hat! -$15", cash: -15, pts: 5 }
+    const shops = [
+        { name: "Park", items: [{n: "Balloon", p: 10}, {n: "Kite", p: 50}] },
+        { name: "Library", items: [{n: "Pen", p: 5}, {n: "History Book", p: 40}] },
+        { name: "Hospital", items: [{n: "Mask", p: 10}, {n: "First Aid", p: 100}] },
+        { name: "Market", items: [{n: "Apple", p: 15}, {n: "Big Turkey", p: 80}] },
+        { name: "Bookstore", items: [{n: "Manga", p: 35}, {n: "Encyclopedia", p: 120}] },
+        { name: "Tea Shop", items: [{n: "Green Tea", p: 30}, {n: "Bubble Tea", p: 65}] },
+        { name: "Post Office", items: [{n: "Stamp", p: 2}, {n: "Postcard", p: 25}] },
+        { name: "Zoo", items: [{n: "Ice Cream", p: 20}, {n: "Stuffed Lion", p: 150}] }
     ];
 
-    function play() {
-        if(pos !== -1) document.getElementById('s'+pos).classList.remove('active');
+    function startGame() {
+        for(let i=0; i<3; i++) players[i].avatar = document.getElementById(`p${i}-av`).value;
+        for(let i=0; i<3; i++) document.getElementById(`p${i}-icon`).innerText = players[i].avatar;
+        document.getElementById('setup').style.display = 'none';
+        document.getElementById('game-ui').style.display = 'block';
+        document.getElementById('main-board').style.display = 'grid';
+        updateTurnUI();
+    }
+
+    function roll() {
+        rollVal = Math.floor(Math.random() * 6) + 1;
+        document.getElementById('dice-val').innerText = rollVal;
+        let p = players[turn];
+        targetPos = (p.pos === -1) ? (rollVal - 1) % 8 : (p.pos + rollVal) % 8;
+        document.getElementById('msg').innerText = `Count ${rollVal} spaces and tap!`;
+        document.getElementById('rollBtn').disabled = true;
+    }
+
+    function handleTap(idx) {
+        if (rollVal === 0) return;
+        if (idx === targetPos) {
+            openShop(idx);
+        } else {
+            document.getElementById('msg').innerText = "Wrong spot! Count again.";
+        }
+    }
+
+    function openShop(idx) {
+        const shop = shops[idx];
+        document.getElementById('shop-ui').style.display = 'block';
+        document.getElementById('shop-name').innerText = shop.name;
+        const container = document.getElementById('shop-options');
+        container.innerHTML = '';
         
-        const roll = Math.floor(Math.random() * 6) + 1;
-        document.getElementById('dice-ui').innerText = roll;
-        pos = (pos + roll) % 8;
-        
-        document.getElementById('s'+pos).classList.add('active');
-        
-        const event = events[pos];
-        money += event.cash;
-        score += event.pts;
-        
-        // Update Screen
-        document.getElementById('money').innerText = money;
-        document.getElementById('score').innerText = score;
-        
-        const style = event.cash >= 0 ? "money-plus" : "money-minus";
-        log.innerHTML = `<span class="${style}">[${event.name}] ${event.msg}</span><br>` + log.innerHTML;
-        
-        if(money <= 0) {
-            alert("Game Over! You ran out of money. Restarting...");
+        shop.items.forEach(item => {
+            let btn = document.createElement('button');
+            btn.className = 'btn-buy';
+            btn.innerText = `${item.n} ($${item.p})`;
+            btn.onclick = () => buyItem(idx, item.p);
+            container.appendChild(btn);
+        });
+    }
+
+    function buyItem(idx, cost) {
+        let p = players[turn];
+        if (p.money >= cost) {
+            p.money -= cost;
+            p.pos = idx;
+            p.items.add(idx);
+            document.getElementById('shop-ui').style.display = 'none';
+            checkGameOver(p);
+            updateBoard();
+            nextTurn();
+        } else {
+            alert("Not enough money! Choose a cheaper item.");
+        }
+    }
+
+    function checkGameOver(p) {
+        if (p.money <= 0 && p.items.size < 8) {
+            alert(`GAME OVER for Player ${turn+1}!`);
+            location.reload();
+        }
+        if (p.items.size === 8) {
+            alert(`CONGRATULATIONS! Player ${turn+1} wins the quest!`);
             location.reload();
         }
     }
-</script>
 
+    function nextTurn() {
+        turn = (turn + 1) % 3;
+        rollVal = 0;
+        document.getElementById('rollBtn').disabled = false;
+        updateTurnUI();
+    }
+
+    function updateTurnUI() {
+        for(let i=0; i<3; i++) document.getElementById(`box-${i}`).className = (i === turn) ? 'player-box current-turn' : 'player-box';
+        document.getElementById('msg').innerText = `P${turn+1}'s Turn (${players[turn].avatar})`;
+    }
+
+    function updateBoard() {
+        document.querySelectorAll('.p-marker').forEach(m => m.remove());
+        players.forEach((p, i) => {
+            if(p.pos !== -1) {
+                let s = document.createElement('span');
+                s.className = 'p-marker';
+                s.innerText = p.avatar;
+                s.style.top = (i * 8) + "px";
+                document.getElementById('s' + p.pos).appendChild(s);
+            }
+            document.getElementById(`p${i}-m`).innerText = p.money;
+            document.getElementById(`p${i}-c`).innerText = p.items.size;
+        });
+    }
+</script>
 </body>
 </html>
