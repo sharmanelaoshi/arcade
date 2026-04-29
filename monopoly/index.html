@@ -1,200 +1,222 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Fortnite Monopoly: Budget Quest</title>
+    <title>Quest Arcade: Fortnite Edition</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         :root { --fn-blue: #1e90ff; --fn-purple: #8e44ad; --fn-yellow: #f1c40f; --fn-dark: #2f3542; }
         body { font-family: 'Arial Black', sans-serif; background: linear-gradient(135deg, #1e3799, #8e44ad); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: white; }
         
-        #lobby { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 500; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        .lobby-box { background: white; padding: 30px; border-radius: 20px; border: 8px solid var(--fn-blue); color: black; text-align: center; width: 400px; }
+        /* START LOBBY */
+        #lobby { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .lobby-card { background: white; padding: 30px; border-radius: 25px; border: 8px solid var(--fn-blue); color: black; text-align: center; width: 350px; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
+        .lobby-card select { font-size: 18px; padding: 5px; border-radius: 10px; margin: 5px; width: 80%; }
+
+        /* HUD STATS */
+        #top-bar { background: rgba(0,0,0,0.85); padding: 10px; display: flex; justify-content: space-around; border-bottom: 5px solid var(--fn-yellow); }
+        .player-status { background: var(--fn-dark); padding: 12px; border-radius: 15px; width: 30%; font-size: 16px; border: 3px solid #57606f; transition: 0.3s; }
+        .active-status { border-color: var(--fn-yellow); box-shadow: 0 0 15px var(--fn-yellow); transform: scale(1.02); }
+
+        /* MAIN LAYOUT */
+        #game-area { display: flex; flex: 1; padding: 20px; gap: 25px; justify-content: center; align-items: center; overflow: hidden; }
+
+        /* BOARD CONFIG */
+        .board { display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); width: 480px; height: 480px; background: #000; border: 12px solid #222; gap: 8px; padding: 8px; border-radius: 10px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+        .square { background: white; border-radius: 4px; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 12px; color: #111; cursor: pointer; position: relative; font-weight: bold; text-align: center; line-height: 1.2; }
+        .middle-zone { grid-column: 2 / 4; grid-row: 2 / 4; background: var(--fn-purple); border-radius: 15px; display: flex; flex-direction: column; justify-content: center; align-items: center; border: 4px solid white; position: relative; }
         
-        #top-bar { background: rgba(0,0,0,0.8); padding: 10px; display: flex; justify-content: space-around; border-bottom: 5px solid var(--fn-yellow); }
-        .player-box { background: var(--fn-dark); padding: 10px; border-radius: 12px; width: 30%; font-size: 16px; border: 3px solid #57606f; }
-        .current-turn-stats { border-color: var(--fn-yellow); box-shadow: 0 0 20px var(--fn-yellow); background: #3d3d3d; }
+        /* HIGHLIGHTS */
+        .turn-glow { background: var(--fn-yellow) !important; color: black !important; box-shadow: inset 0 0 15px orange; border: 3px solid white !important; }
+        .p-marker { font-size: 48px; position: absolute; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 100; filter: drop-shadow(2px 4px 4px rgba(0,0,0,0.4)); }
 
-        #main-container { display: flex; flex: 1; padding: 20px; gap: 20px; justify-content: center; align-items: center; }
-
-        .board { display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); width: 480px; height: 480px; background: #111; border: 10px solid #000; gap: 8px; padding: 8px; }
-        .square { background: white; border: 2px solid #ccc; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 13px; color: #111; cursor: pointer; position: relative; font-weight: bold; text-align: center; }
-        .middle { grid-column: 2 / 4; grid-row: 2 / 4; background: var(--fn-purple); border-radius: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; border: 5px solid white; }
+        /* SIDE INTERACTION PANEL */
+        #action-panel { background: rgba(0,0,0,0.85); width: 340px; border-radius: 25px; border: 5px solid var(--fn-blue); padding: 25px; display: flex; flex-direction: column; align-items: center; min-height: 400px; box-shadow: 5px 5px 20px rgba(0,0,0,0.3); }
+        #prompt-msg { font-size: 22px; color: var(--fn-yellow); margin-bottom: 20px; text-align: center; text-transform: uppercase; letter-spacing: 1px; }
         
-        .my-turn-highlight { background: var(--fn-yellow) !important; color: black !important; border: 5px solid white !important; box-shadow: inset 0 0 15px orange; }
-        .p-marker { font-size: 50px; position: absolute; transition: 0.3s; z-index: 100; text-shadow: 2px 2px 5px rgba(0,0,0,0.5); }
+        button { padding: 14px; font-size: 20px; border-radius: 12px; border: none; background: var(--fn-blue); color: white; cursor: pointer; font-weight: bold; width: 100%; border-bottom: 6px solid #0652dd; margin: 8px 0; text-transform: uppercase; }
+        button:active { transform: translateY(4px); border-bottom-width: 2px; }
+        button:disabled { background: #636e72; border-color: #2d3436; cursor: not-allowed; }
 
-        #side-panel { background: rgba(0,0,0,0.85); width: 360px; border-radius: 25px; border: 5px solid var(--fn-blue); padding: 25px; display: flex; flex-direction: column; align-items: center; }
-        #msg { font-size: 24px; margin-bottom: 20px; color: var(--fn-yellow); text-align: center; }
-        
-        button { padding: 12px; font-size: 20px; border-radius: 10px; border: none; background: var(--fn-blue); color: white; cursor: pointer; font-weight: bold; width: 100%; border-bottom: 5px solid #0652dd; margin: 5px 0; }
-        .btn-buy { background: #2ecc71; border-bottom: 5px solid #27ae60; }
-        .btn-mini { background: #e67e22; border-bottom: 5px solid #d35400; }
-        .btn-pay { background: #e74c3c; border-bottom: 5px solid #c0392b; }
+        .btn-green { background: #2ecc71; border-color: #27ae60; }
+        .btn-orange { background: #e67e22; border-color: #d35400; font-size: 16px; width: 31%; margin: 2px; padding: 10px; }
 
-        .error-flash { animation: flashRed 0.6s; }
-        @keyframes flashRed { 0% { background: #ff4757; } 100% { background: transparent; } }
+        .red-flash { animation: screenShake 0.4s; background: #ff4757 !important; }
+        @keyframes screenShake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
     </style>
 </head>
-<body id="main-body">
+<body id="body-main">
 
 <div id="lobby">
-    <div class="lobby-box">
-        <h1>🎮 LOBBY</h1>
-        <p>P1: <select id="p0-av"><option>🐱</option><option>🐶</option></select></p>
-        <p>P2: <select id="p1-av"><option>🐰</option><option>🦊</option></select></p>
-        <p>P3: <select id="p2-av"><option>🐯</option><option>🐨</option></select></p>
-        <button onclick="startGame()">BATTLE START</button>
+    <div class="lobby-card">
+        <h1 style="margin:0 0 15px 0;">QUEST LOBBY</h1>
+        <p>P1 (Red): <select id="sel0"><option>🐱</option><option>🐶</option><option>🤖</option></select></p>
+        <p>P2 (Green): <select id="sel1"><option>🐰</option><option>🐨</option><option>🐯</option></select></p>
+        <p>P3 (Blue): <select id="sel2"><option>🦁</option><option>🐼</option><option>🦊</option></select></p>
+        <button onclick="initGame()">BATTLE START</button>
     </div>
 </div>
 
 <div id="top-bar">
-    <div class="player-box" id="box-0">P1 <span id="p0-icon"></span><br>$<span id="p0-m">250</span> | 🎒 <span id="p0-c">0</span>/8</div>
-    <div class="player-box" id="box-1">P2 <span id="p1-icon"></span><br>$<span id="p1-m">250</span> | 🎒 <span id="p1-c">0</span>/8</div>
-    <div class="player-box" id="box-2">P3 <span id="p2-icon"></span><br>$<span id="p2-m">250</span> | 🎒 <span id="p2-c">0</span>/8</div>
+    <div class="player-status" id="stat0">P1 <span id="icon0"></span><br>$<span id="cash0">250</span> | 🎒 <span id="inv0">0</span>/8</div>
+    <div class="player-status" id="stat1">P2 <span id="icon1"></span><br>$<span id="cash1">250</span> | 🎒 <span id="inv1">0</span>/8</div>
+    <div class="player-status" id="stat2">P3 <span id="icon2"></span><br>$<span id="cash2">250</span> | 🎒 <span id="inv2">0</span>/8</div>
 </div>
 
-<div id="main-container">
+<div id="game-area">
     <div class="board">
-        <div class="square" id="s3">P3 BASE<br>🔵</div>
-        <div class="square" id="s4" onclick="checkClick(4)">SUPERMARKET<br>🛒</div>
-        <div class="square" id="s5" onclick="checkClick(5)">HOSPITAL<br>🏥</div>
-        <div class="square" id="s6">P2 BASE<br>🟢</div>
-        <div class="square" id="s2" onclick="checkClick(2)">BOOKSTORE<br>📚</div>
-        <div class="middle"><div id="dice-val" style="font-size:70px;">🎲</div></div>
-        <div class="square" id="s7" onclick="checkClick(7)">POST OFFICE<br>✉️</div>
-        <div class="square" id="s1" onclick="checkClick(1)">PARK<br>🌳</div>
-        <div class="square" id="s8" onclick="checkClick(8)">TEA SHOP<br>🧋</div>
-        <div class="square" id="s0">P1 BASE<br>🔴</div>
-        <div class="square" id="s11" onclick="checkClick(11)">ZOO<br>🦁</div>
-        <div class="square" id="s10" onclick="checkClick(10)">LIBRARY<br>📖</div>
-        <div class="square" id="s9" style="background:#dfe6e9">FREE SPACE</div>
+        <div class="square" id="sq3">P3 HOME<br>🔵</div>
+        <div class="square" id="sq4" onclick="playerAction(4)">SUPERMARKET<br>🛒</div>
+        <div class="square" id="sq5" onclick="playerAction(5)">HOSPITAL<br>🏥</div>
+        <div class="square" id="sq6">P2 HOME<br>🟢</div>
+
+        <div class="square" id="sq2" onclick="playerAction(2)">BOOKSTORE<br>📚</div>
+        <div class="middle-zone"><div id="die-face" style="font-size:80px;">🎲</div></div>
+        <div class="square" id="sq7" onclick="playerAction(7)">POST OFFICE<br>✉️</div>
+
+        <div class="square" id="sq1" onclick="playerAction(1)">PARK<br>🌳</div>
+        <div class="square" id="sq8" onclick="playerAction(8)">TEA SHOP<br>🧋</div>
+
+        <div class="square" id="sq0">P1 HOME<br>🔴</div>
+        <div class="square" id="sq11" onclick="playerAction(11)">ZOO<br>🦁</div>
+        <div class="square" id="sq10" onclick="playerAction(10)">LIBRARY<br>📖</div>
+        <div class="square" id="sq9" style="background:#dfe6e9">FREE PARKING</div>
     </div>
 
-    <div id="side-panel">
-        <div id="msg">WAITING...</div>
-        <button id="rollBtn" onclick="roll()">ROLL DICE</button>
+    <div id="action-panel">
+        <div id="prompt-msg">ROLL TO START!</div>
+        <button id="roll-btn" onclick="tossDie()">ROLL DICE</button>
         
-        <div id="shop-area" style="display:none; width:100%;">
-            <h2 id="shop-name">SHOP</h2>
-            <div id="shop-options"></div>
+        <div id="shop-panel" style="display:none; width:100%;">
+            <h2 id="loc-title" style="margin:5px 0; color:white;">LOCATION</h2>
+            <div id="loc-items"></div>
         </div>
 
-        <div id="quest-area" style="display:none; width:100%;">
-            <h2 style="color:#f39c12;">VISITOR QUEST!</h2>
-            <p style="font-size:14px;">Choose your path:</p>
-            <button class="btn-pay" onclick="payFee()">Pay $50 (Safe)</button>
-            <button class="btn-mini" onclick="startMiniGame()">Challenge! (RPS)</button>
+        <div id="fee-panel" style="display:none; width:100%; text-align:center;">
+            <h2 style="color:#ff4757;">⚠️ BASE FEE</h2>
+            <p style="font-size:14px;">Pay $50 or Play RPS for Free!</p>
+            <button class="btn-green" style="background:#eb4d4b" onclick="payBaseFee()">PAY $50 CASH</button>
+            <div style="display:flex; justify-content:space-between; margin-top:10px;">
+                <button class="btn-orange" onclick="runRPS('Rock')">✊</button>
+                <button class="btn-orange" onclick="runRPS('Paper')">✋</button>
+                <button class="btn-orange" onclick="runRPS('Scissors')">✌️</button>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-    let players = [{pos:0, money:250, items:new Set(), avatar:''}, {pos:6, money:250, items:new Set(), avatar:''}, {pos:3, money:250, items:new Set(), avatar:''}];
-    let turn = 0, rollVal = 0, targetPos = -1;
-    const shops = {
-        1: { name: "PARK", items: [{n: "Balloon", p: 10}, {n: "Kite", p: 40}] },
-        2: { name: "BOOKSTORE", items: [{n: "Manga", p: 30}, {n: "Map", p: 80}] },
-        4: { name: "SUPERMARKET", items: [{n: "Apple", p: 15}, {n: "Shield", p: 50}] },
-        5: { name: "HOSPITAL", items: [{n: "Bandage", p: 10}, {n: "Checkup", p: 60}] },
-        7: { name: "POST OFFICE", items: [{n: "Stamp", p: 5}, {n: "Letter", p: 20}] },
-        8: { name: "TEA SHOP", items: [{n: "Green Tea", p: 30}, {n: "Bubble Tea", p: 55}] },
-        10: { name: "LIBRARY", items: [{n: "Pen", p: 5}, {n: "Book", p: 35}] },
-        11: { name: "ZOO", items: [{n: "Ice Cream", p: 20}, {n: "Ticket", p: 120}] }
+    let players = [{pos:0, cash:250, items:new Set(), char:''}, {pos:6, cash:250, items:new Set(), char:''}, {pos:3, cash:250, items:new Set(), char:''}];
+    let activePlayer = 0, currentRoll = 0, nextPos = -1;
+    const locMap = {
+        1: { n: "PARK", i: [{n:"Kite", p:10}, {n:"Scooter", p:40}] },
+        2: { n: "BOOKSTORE", i: [{n:"Pen", p:5}, {n:"Comic", p:35}] },
+        4: { n: "SUPERMARKET", i: [{n:"Shield", p:25}, {n:"Medkit", p:60}] },
+        5: { n: "HOSPITAL", i: [{n:"Bandage", p:10}, {n:"Potion", p:85}] },
+        7: { n: "POST OFFICE", i: [{n:"Stamp", p:5}, {n:"Parcel", p:30}] },
+        8: { n: "TEA SHOP", i: [{n:"Slurp", p:35}, {n:"Chug", p:70}] },
+        10: { n: "LIBRARY", i: [{n:"Notebook", p:10}, {n:"Book", p:45}] },
+        11: { n: "ZOO", i: [{n:"Ice Cream", p:20}, {n:"Llama", p:140}] }
     };
 
-    function startGame() {
-        for(let i=0; i<3; i++) players[i].avatar = document.getElementById(`p${i}-av`).value;
+    function initGame() {
+        for(let i=0; i<3; i++) players[i].char = document.getElementById(`sel${i}`).value;
         document.getElementById('lobby').style.display = 'none';
-        updateBoard(); updateTurnUI();
+        refreshUI();
     }
 
-    function roll() {
-        rollVal = Math.floor(Math.random() * 6) + 1;
-        document.getElementById('dice-val').innerText = rollVal;
-        targetPos = (players[turn].pos + rollVal) % 12;
-        document.getElementById('msg').innerText = `MOVE ${rollVal} SPACES!`;
-        document.getElementById('rollBtn').disabled = true;
+    function tossDie() {
+        currentRoll = Math.floor(Math.random() * 6) + 1;
+        document.getElementById('die-face').innerText = currentRoll;
+        nextPos = (players[activePlayer].pos + currentRoll) % 12;
+        document.getElementById('prompt-msg').innerText = `P${activePlayer+1}: MOVE ${currentRoll} TILES!`;
+        document.getElementById('roll-btn').disabled = true;
     }
 
-    function checkClick(idx) {
-        if (rollVal === 0) return;
-        if (idx === targetPos) {
-            if (shops[idx]) {
-                showShop(idx);
-            } else if ([0,3,6].includes(idx) && idx !== players[turn].pos) {
-                document.getElementById('quest-area').style.display = 'block';
-            } else {
-                players[turn].pos = idx; updateBoard(); nextTurn();
-            }
+    function playerAction(idx) {
+        if (currentRoll === 0) return;
+        if (idx !== nextPos) {
+            document.getElementById('body-main').classList.add('red-flash');
+            setTimeout(() => document.getElementById('body-main').classList.remove('red-flash'), 400);
+            return;
+        }
+
+        if (locMap[idx]) {
+            openShop(idx);
+        } else if ([0,3,6].includes(idx) && idx !== [0,6,3][activePlayer]) {
+            document.getElementById('fee-panel').style.display = 'block';
+            document.getElementById('prompt-msg').innerText = "VISITOR CHALLENGE!";
         } else {
-            document.getElementById('main-body').classList.add('error-flash');
-            setTimeout(() => document.getElementById('main-body').classList.remove('error-flash'), 600);
+            endTurn(idx);
         }
     }
 
-    function showShop(idx) {
-        document.getElementById('shop-area').style.display = 'block';
-        document.getElementById('shop-name').innerText = shops[idx].name;
-        const container = document.getElementById('shop-options');
-        container.innerHTML = '';
-        shops[idx].items.forEach(item => {
-            let b = document.createElement('button'); b.className = 'btn-buy';
+    function openShop(idx) {
+        document.getElementById('shop-panel').style.display = 'block';
+        document.getElementById('loc-title').innerText = locMap[idx].n;
+        const list = document.getElementById('loc-items');
+        list.innerHTML = '';
+        locMap[idx].i.forEach(item => {
+            let b = document.createElement('button'); b.className = 'btn-green';
             b.innerText = `${item.n} ($${item.p})`;
             b.onclick = () => {
-                if(players[turn].money >= item.p) {
-                    players[turn].money -= item.p; players[turn].pos = idx; players[turn].items.add(idx);
-                    document.getElementById('shop-area').style.display = 'none';
-                    updateBoard(); if(players[turn].items.size === 8) { alert(players[turn].avatar + " WINS!"); location.reload(); }
-                    nextTurn();
-                } else { alert("NOT ENOUGH MONEY!"); }
+                if(players[activePlayer].cash >= item.p) {
+                    players[activePlayer].cash -= item.p;
+                    players[activePlayer].items.add(idx);
+                    document.getElementById('shop-panel').style.display = 'none';
+                    endTurn(idx);
+                } else { alert("NOT ENOUGH CASH!"); }
             };
-            container.appendChild(b);
+            list.appendChild(b);
         });
     }
 
-    function startMiniGame() {
-        const rps = ["Rock", "Paper", "Scissors"];
-        const pChoice = prompt("Type: Rock, Paper, or Scissors");
-        const bChoice = rps[Math.floor(Math.random() * 3)];
-        
-        if (pChoice === bChoice) { alert(`Draw! (Both picked ${bChoice}). No money lost.`); }
-        else if ((pChoice === "Rock" && bChoice === "Scissors") || (pChoice === "Paper" && bChoice === "Rock") || (pChoice === "Scissors" && bChoice === "Paper")) {
-            alert(`You WON! (They picked ${bChoice}). Land for FREE!`);
+    function runRPS(choice) {
+        const moves = ["Rock", "Paper", "Scissors"];
+        const cpu = moves[Math.floor(Math.random() * 3)];
+        if (choice === cpu) alert(`DRAW! Both picked ${cpu}. Safe passage!`);
+        else if ((choice === "Rock" && cpu === "Scissors") || (choice === "Paper" && cpu === "Rock") || (choice === "Scissors" && cpu === "Paper")) {
+            alert(`WIN! You beat ${cpu}. No fee!`);
         } else {
-            alert(`You LOST! (They picked ${bChoice}). Pay $100 penalty!`);
-            players[turn].money -= 100;
+            alert(`LOSS! ${cpu} beats ${choice}. Pay $100 penalty!`);
+            players[activePlayer].cash -= 100;
         }
-        document.getElementById('quest-area').style.display = 'none';
-        players[turn].pos = targetPos; updateBoard(); nextTurn();
+        document.getElementById('fee-panel').style.display = 'none';
+        endTurn(nextPos);
     }
 
-    function payFee() {
-        players[turn].money -= 50; players[turn].pos = targetPos;
-        document.getElementById('quest-area').style.display = 'none';
-        updateBoard(); nextTurn();
+    function payBaseFee() {
+        players[activePlayer].cash -= 50;
+        document.getElementById('fee-panel').style.display = 'none';
+        endTurn(nextPos);
     }
 
-    function nextTurn() { turn = (turn + 1) % 3; rollVal = 0; document.getElementById('rollBtn').disabled = false; updateTurnUI(); updateBoard(); }
-
-    function updateTurnUI() {
-        for(let i=0; i<3; i++) {
-            document.getElementById(`box-${i}`).className = (i === turn) ? 'player-box current-turn-stats' : 'player-box';
-            document.getElementById(`p${i}-icon`).innerText = players[i].avatar;
-        }
-        document.getElementById('msg').innerText = `P${turn+1}'S TURN`;
+    function endTurn(idx) {
+        players[activePlayer].pos = idx;
+        if(players[activePlayer].items.size === 8) { alert("VICTORY ROYALE! Player " + (activePlayer+1) + " Wins!"); location.reload(); }
+        if(players[activePlayer].cash < 0) { alert("P" + (activePlayer+1) + " is broke! Game Over."); location.reload(); }
+        activePlayer = (activePlayer + 1) % 3;
+        currentRoll = 0;
+        document.getElementById('roll-btn').disabled = false;
+        refreshUI();
     }
 
-    function updateBoard() {
+    function refreshUI() {
         document.querySelectorAll('.p-marker').forEach(m => m.remove());
-        document.querySelectorAll('.square').forEach(s => s.classList.remove('my-turn-highlight'));
-        document.getElementById('s' + [0, 6, 3][turn]).classList.add('my-turn-highlight');
-        document.getElementById('s' + players[turn].pos).classList.add('my-turn-highlight');
+        document.querySelectorAll('.square').forEach(s => s.classList.remove('turn-glow'));
+        document.querySelectorAll('.player-status').forEach(s => s.classList.remove('active-status'));
+        
+        document.getElementById('stat' + activePlayer).classList.add('active-status');
+        document.getElementById('sq' + [0, 6, 3][activePlayer]).classList.add('turn-glow');
+        document.getElementById('sq' + players[activePlayer].pos).classList.add('turn-glow');
+
         players.forEach((p, i) => {
-            let s = document.createElement('span'); s.className = 'p-marker'; s.innerText = p.avatar;
-            s.style.left = (i * 15) + "px"; document.getElementById('s' + p.pos).appendChild(s);
-            document.getElementById(`p${i}-m`).innerText = p.money; document.getElementById(`p${i}-c`).innerText = p.items.size;
-            if(p.money < 0) { alert("P" + (i+1) + " is broke! Game Over."); location.reload(); }
+            let m = document.createElement('span'); m.className = 'p-marker'; m.innerText = p.char;
+            m.style.left = (i * 14) + "px"; document.getElementById('sq' + p.pos).appendChild(m);
+            document.getElementById(`cash${i}`).innerText = p.cash;
+            document.getElementById(`inv${i}`).innerText = p.items.size;
+            document.getElementById(`icon${i}`).innerText = p.char;
         });
+        document.getElementById('prompt-msg').innerText = `P${activePlayer+1}'S TURN`;
     }
 </script>
 </body>
