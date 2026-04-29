@@ -1,78 +1,131 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Monopoly: Where are you going?</title>
+    <title>Grade 5 City Explorer</title>
     <style>
-        body { font-family: sans-serif; text-align: center; background: #2c3e50; color: white; }
-        canvas { background: white; border: 5px solid #ecf0f1; border-radius: 10px; cursor: pointer; max-width: 95%; }
-        .info { margin-top: 20px; font-size: 24px; }
-        button { padding: 15px 40px; font-size: 20px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f7f4; text-align: center; }
+        #stats { background: #2d3436; color: white; padding: 15px; font-size: 20px; border-bottom: 5px solid #00b894; }
+        
+        .board { 
+            display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); 
+            width: 450px; height: 450px; margin: 20px auto; background: white; border: 4px solid #2d3436; gap: 4px;
+        }
+        
+        .square { 
+            border: 1px solid #dfe6e9; display: flex; flex-direction: column; 
+            justify-content: center; align-items: center; font-size: 13px; font-weight: bold; background: #ffffff;
+        }
+
+        .middle { grid-column: 2 / 4; grid-row: 2 / 4; background: #dfe6e9; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        
+        /* Player Marker */
+        .active { background: #ffeaa7 !important; border: 3px solid #fdcb6e; transform: scale(1.05); z-index: 10; }
+        
+        /* Action UI */
+        #action-card { 
+            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: white; border: 3px solid #2d3436; padding: 20px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); z-index: 100; width: 300px;
+        }
+
+        button { padding: 10px 20px; margin: 10px; cursor: pointer; border-radius: 5px; border: none; font-weight: bold; }
+        .btn-roll { background: #0984e3; color: white; font-size: 18px; }
+        .btn-buy { background: #00b894; color: white; }
+        .btn-do { background: #6c5ce7; color: white; }
+        
+        .owned-tag { font-size: 10px; color: #d63031; display: none; }
     </style>
 </head>
 <body>
 
-    <h1>🎲 Destination Monopoly</h1>
-    <canvas id="gameCanvas" width="400" height="400"></canvas>
+<div id="stats">💰 Wallet: $<span id="money">1000</span> | 🎒 Inventory: <span id="items">Empty</span></div>
+
+<div class="board">
+    <div class="square" id="s0">PARK<br><span class="owned-tag">OWNED</span></div>
+    <div class="square" id="s1">LIBRARY<br><span class="owned-tag">OWNED</span></div>
+    <div class="square" id="s2">HOSPITAL<br><span class="owned-tag">OWNED</span></div>
+    <div class="square" id="s3">SUPERMARKET<br><span class="owned-tag">OWNED</span></div>
     
-    <div class="info">
-        <button onclick="rollDice()">ROLL DICE</button>
-        <p id="status">Click to start your journey!</p>
+    <div class="square" id="s7">ZOO<br><span class="owned-tag">OWNED</span></div>
+    <div class="middle">
+        <div id="dice" style="font-size: 40px; margin-bottom: 10px;">🎲</div>
+        <button class="btn-roll" onclick="roll()">ROLL DICE</button>
     </div>
+    <div class="square" id="s4">BOOKSTORE<br><span class="owned-tag">OWNED</span></div>
+    
+    <div class="square" id="s6">POST OFFICE<br><span class="owned-tag">OWNED</span></div>
+    <div class="square" id="s5">TEA SHOP<br><span class="owned-tag">OWNED</span></div>
+    <div class="square" style="background:#b2bec3">GO</div>
+    <div class="square" style="background:#b2bec3">FREE</div>
+</div>
 
-    <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const places = ["Park", "Library", "Hospital", "Supermarket", "Bookstore", "Tea Shop", "Post Office", "Zoo"];
-        let currentPos = -1;
+<div id="action-card">
+    <h2 id="place-name">Place</h2>
+    <p id="place-desc">What do you want to do?</p>
+    <button class="btn-buy" id="buy-btn">Buy Property</button>
+    <button class="btn-do" id="do-btn">Do Activity</button>
+    <br>
+    <button onclick="closeCard()" style="background:#eee">Just passing through...</button>
+</div>
 
-        function drawBoard() {
-            ctx.clearRect(0, 0, 400, 400);
-            const size = 100;
-            const spots = [
-                {x: 0, y: 0, color: "#e74c3c"},   // Park
-                {x: 150, y: 0, color: "#e74c3c"}, // Library
-                {x: 300, y: 0, color: "#3498db"}, // Hospital
-                {x: 300, y: 150, color: "#3498db"}, // Supermarket
-                {x: 300, y: 300, color: "#f1c40f"}, // Bookstore
-                {x: 150, y: 300, color: "#f1c40f"}, // Tea Shop
-                {x: 0, y: 300, color: "#9b59b6"}, // Post Office
-                {x: 0, y: 150, color: "#9b59b6"}  // Zoo
-            ];
+<script>
+    let money = 1000;
+    let currentPos = -1;
+    let inventory = [];
+    
+    const data = [
+        { name: "Park", buy: 200, do: "Rent a Bike", cost: 20, item: "Bicycle" },
+        { name: "Library", buy: 150, do: "Get a Membership", cost: 10, item: "Library Card" },
+        { name: "Hospital", buy: 400, do: "Health Check-up", cost: 100, item: "Health Certificate" },
+        { name: "Supermarket", buy: 300, do: "Buy Groceries", cost: 50, item: "Fruit Basket" },
+        { name: "Bookstore", buy: 250, do: "Buy a Manga", cost: 30, item: "Cool Book" },
+        { name: "Tea Shop", buy: 100, do: "Drink Bubble Tea", cost: 60, item: "Pearl Milk Tea" },
+        { name: "Post Office", buy: 200, do: "Send a Letter", cost: 5, item: "Stamps" },
+        { name: "Zoo", buy: 500, do: "Feed the Lions", cost: 80, item: "Zoo Badge" }
+    ];
 
-            spots.forEach((s, i) => {
-                // Draw Square
-                ctx.fillStyle = (currentPos === i) ? "#2ecc71" : "white";
-                ctx.fillRect(s.x, s.y, size, size);
-                ctx.strokeStyle = "#333";
-                ctx.lineWidth = 2;
-                ctx.strokeRect(s.x, s.y, size, size);
+    function roll() {
+        if (currentPos !== -1) document.getElementById('s' + currentPos).classList.remove('active');
+        const move = Math.floor(Math.random() * 6) + 1;
+        document.getElementById('dice').innerText = move;
+        currentPos = (currentPos + move) % 8;
+        
+        document.getElementById('s' + currentPos).classList.add('active');
+        setTimeout(showAction, 500);
+    }
 
-                // Draw Color Bar
-                ctx.fillStyle = s.color;
-                ctx.fillRect(s.x, s.y, size, 20);
+    function showAction() {
+        const place = data[currentPos];
+        document.getElementById('action-card').style.display = 'block';
+        document.getElementById('place-name').innerText = place.name;
+        document.getElementById('buy-btn').innerText = `Buy Property ($${place.buy})`;
+        document.getElementById('do-btn').innerText = `${place.do} ($${place.cost})`;
+        
+        document.getElementById('buy-btn').onclick = () => {
+            if(money >= place.buy) {
+                money -= place.buy;
+                document.getElementById('s' + currentPos).querySelector('.owned-tag').style.display = 'block';
+                updateStats();
+                closeCard();
+            } else { alert("Not enough money!"); }
+        };
 
-                // Draw Text
-                ctx.fillStyle = "black";
-                ctx.font = "bold 12px Arial";
-                ctx.fillText(places[i], s.x + 5, s.y + 45);
-            });
+        document.getElementById('do-btn').onclick = () => {
+            if(money >= place.cost) {
+                money -= place.cost;
+                inventory.push(place.item);
+                updateStats();
+                closeCard();
+            } else { alert("Not enough money!"); }
+        };
+    }
 
-            // Draw center dice area
-            ctx.fillStyle = "#ecf0f1";
-            ctx.fillRect(110, 110, 180, 180);
-            ctx.fillStyle = "#34495e";
-            ctx.font = "20px Arial";
-            ctx.fillText("GO!", 180, 200);
-        }
+    function closeCard() { document.getElementById('action-card').style.display = 'none'; }
+    
+    function updateStats() {
+        document.getElementById('money').innerText = money;
+        document.getElementById('items').innerText = inventory.join(", ") || "Empty";
+    }
+</script>
 
-        function rollDice() {
-            const roll = Math.floor(Math.random() * 6) + 1;
-            currentPos = (currentPos + roll) % places.length;
-            drawBoard();
-            document.getElementById('status').innerHTML = `You rolled a ${roll}! <br> <b>I am going to the ${places[currentPos]}.</b>`;
-        }
-
-        drawBoard(); // Initial draw
-    </script>
 </body>
 </html>
