@@ -1,36 +1,115 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Where are you going?</title>
     <style>
-        body { font-family: sans-serif; text-align: center; background: #f0f8ff; }
-        #board { font-weight: bold; color: #2c3e50; font-size: 24px; margin: 20px; }
-        button { padding: 10px 20px; font-size: 18px; cursor: pointer; background: #4CAF50; color: white; border: none; border-radius: 5px; }
+        :root { --blue: #2196F3; --green: #4CAF50; --gold: #FFC107; }
+        body { font-family: 'Arial', sans-serif; background-color: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        h1 { color: #333; margin-bottom: 10px; }
+        
+        /* Monopoly Board Layout */
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 10px;
+            width: 320px;
+            height: 320px;
+            margin: 20px;
+        }
+        
+        .spot {
+            background: white;
+            border: 3px solid #ccc;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 14px;
+            font-weight: bold;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .active {
+            border-color: var(--blue);
+            background-color: #e3f2fd;
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(33, 150, 243, 0.5);
+        }
+
+        .center { border: none; background: transparent; font-size: 40px; }
+
+        /* Controls */
+        .controls { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        button { background: var(--green); color: white; border: none; padding: 15px 30px; font-size: 18px; border-radius: 50px; cursor: pointer; width: 100%; transition: 0.2s; }
+        button:hover { background: #45a049; }
+        button:active { transform: scale(0.98); }
+
+        #sentence-box { margin-top: 20px; padding: 15px; border-left: 5px solid var(--blue); background: #f9f9f9; min-height: 50px; font-size: 20px; }
+        .highlight { color: var(--blue); font-weight: bold; }
     </style>
 </head>
 <body>
-    <h1>📍 Where are you going?</h1>
-    <div id="board">Press the button to start!</div>
-    <p id="description"></p>
-    <button onclick="playTurn()">Roll Dice</button>
+
+    <h1>🗺️ Where are you going?</h1>
+    
+    <div class="board">
+        <div class="spot" id="s0">Park<br>公園</div>
+        <div class="spot" id="s1">Library<br>圖書館</div>
+        <div class="spot" id="s2">Hospital<br>醫院</div>
+        <div class="spot" id="s7">Zoo<br>動物園</div>
+        <div class="spot center" id="dice">🎲</div>
+        <div class="spot" id="s3">Supermarket<br>超市</div>
+        <div class="spot" id="s6">Post Office<br>郵局</div>
+        <div class="spot" id="s5">Tea Shop<br>飲料店</div>
+        <div class="spot" id="s4">Bookstore<br>書店</div>
+    </div>
+
+    <div class="controls">
+        <button onclick="roll()">Roll the Dice!</button>
+        <div id="sentence-box">Click the button to start!</div>
+    </div>
 
     <script>
-        const places = ["Park", "Library", "Hospital", "Supermarket", "Bookstore", "Tea Shop", "Post Office", "Zoo"];
+        const places = [
+            "Park", "Library", "Hospital", "Supermarket", 
+            "Bookstore", "Tea Shop", "Post Office", "Zoo"
+        ];
         let currentPos = -1;
 
-        function playTurn() {
-            const roll = Math.floor(Math.random() * 6) + 1;
-            currentPos = (currentPos + roll) % places.length;
+        function roll() {
+            // Roll animation
+            const diceEl = document.getElementById('dice');
+            diceEl.style.transform = "rotate(360deg)";
             
-            document.getElementById('board').innerHTML = "You rolled a " + roll + "! <br> You are going to the: " + places[currentPos];
+            const rollValue = Math.floor(Math.random() * 6) + 1;
             
-            const messages = {
-                "Park": "Time to enjoy the fresh air!",
-                "Library": "Shh! Let's find a good book.",
-                "Hospital": "A quick visit to stay healthy.",
-                "Tea Shop": "Enjoy a delicious pearl milk tea!"
-            };
-            document.getElementById('description').innerText = messages[places[currentPos]] || "Have a great trip!";
+            setTimeout(() => {
+                diceEl.style.transform = "rotate(0deg)";
+                diceEl.innerText = getDiceIcon(rollValue);
+                
+                // Remove old highlight
+                if (currentPos !== -1) document.getElementById('s' + currentPos).classList.remove('active');
+                
+                // Calculate new position
+                currentPos = (currentPos + rollValue) % places.length;
+                
+                // Add new highlight
+                document.getElementById('s' + currentPos).classList.add('active');
+                
+                // Update Sentence
+                const box = document.getElementById('sentence-box');
+                box.innerHTML = `You rolled a ${rollValue}!<br>I am going to the <span class="highlight">${places[currentPos]}</span>.`;
+            }, 300);
+        }
+
+        function getDiceIcon(num) {
+            const icons = ["", "⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
+            return icons[num];
         }
     </script>
 </body>
