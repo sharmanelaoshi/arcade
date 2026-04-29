@@ -1,58 +1,54 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Quest Arcade: Fortnite Edition</title>
+    <title>Fortnite Monopoly: Final Fix</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         :root { --fn-blue: #1e90ff; --fn-purple: #8e44ad; --fn-yellow: #f1c40f; --fn-dark: #2f3542; }
         body { font-family: 'Arial Black', sans-serif; background: linear-gradient(135deg, #1e3799, #8e44ad); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: white; }
         
-        /* START LOBBY */
+        /* LOBBY */
         #lobby { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        .lobby-card { background: white; padding: 30px; border-radius: 25px; border: 8px solid var(--fn-blue); color: black; text-align: center; width: 350px; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
-        .lobby-card select { font-size: 18px; padding: 5px; border-radius: 10px; margin: 5px; width: 80%; }
+        .lobby-card { background: white; padding: 30px; border-radius: 20px; border: 8px solid var(--fn-blue); color: black; text-align: center; }
 
-        /* HUD STATS */
+        /* HUD */
         #top-bar { background: rgba(0,0,0,0.85); padding: 10px; display: flex; justify-content: space-around; border-bottom: 5px solid var(--fn-yellow); }
-        .player-status { background: var(--fn-dark); padding: 12px; border-radius: 15px; width: 30%; font-size: 16px; border: 3px solid #57606f; transition: 0.3s; }
-        .active-status { border-color: var(--fn-yellow); box-shadow: 0 0 15px var(--fn-yellow); transform: scale(1.02); }
+        .player-status { background: var(--fn-dark); padding: 10px; border-radius: 12px; width: 30%; font-size: 15px; border: 3px solid #57606f; }
+        .active-status { border-color: var(--fn-yellow); box-shadow: 0 0 15px var(--fn-yellow); }
 
-        /* MAIN LAYOUT */
-        #game-area { display: flex; flex: 1; padding: 20px; gap: 25px; justify-content: center; align-items: center; overflow: hidden; }
+        /* LAYOUT */
+        #game-area { display: flex; flex: 1; padding: 20px; gap: 20px; justify-content: center; align-items: center; }
 
-        /* BOARD CONFIG */
-        .board { display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); width: 480px; height: 480px; background: #000; border: 12px solid #222; gap: 8px; padding: 8px; border-radius: 10px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
-        .square { background: white; border-radius: 4px; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 12px; color: #111; cursor: pointer; position: relative; font-weight: bold; text-align: center; line-height: 1.2; }
-        .middle-zone { grid-column: 2 / 4; grid-row: 2 / 4; background: var(--fn-purple); border-radius: 15px; display: flex; flex-direction: column; justify-content: center; align-items: center; border: 4px solid white; position: relative; }
+        /* BOARD */
+        .board { display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); width: 440px; height: 440px; background: #000; border: 10px solid #111; gap: 6px; padding: 6px; }
+        .square { background: white; border-radius: 4px; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 11px; color: #111; cursor: pointer; position: relative; font-weight: bold; text-align: center; }
+        .middle-zone { grid-column: 2 / 4; grid-row: 2 / 4; background: var(--fn-purple); border-radius: 15px; display: flex; flex-direction: column; justify-content: center; align-items: center; border: 4px solid white; }
         
-        /* HIGHLIGHTS */
-        .turn-glow { background: var(--fn-yellow) !important; color: black !important; box-shadow: inset 0 0 15px orange; border: 3px solid white !important; }
-        .p-marker { font-size: 48px; position: absolute; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 100; filter: drop-shadow(2px 4px 4px rgba(0,0,0,0.4)); }
+        .turn-glow { background: var(--fn-yellow) !important; color: black !important; }
+        .p-marker { font-size: 45px; position: absolute; transition: 0.3s; z-index: 100; text-shadow: 2px 2px 4px rgba(0,0,0,0.4); }
 
-        /* SIDE INTERACTION PANEL */
-        #action-panel { background: rgba(0,0,0,0.85); width: 340px; border-radius: 25px; border: 5px solid var(--fn-blue); padding: 25px; display: flex; flex-direction: column; align-items: center; min-height: 400px; box-shadow: 5px 5px 20px rgba(0,0,0,0.3); }
-        #prompt-msg { font-size: 22px; color: var(--fn-yellow); margin-bottom: 20px; text-align: center; text-transform: uppercase; letter-spacing: 1px; }
+        /* ACTION PANEL (The Fix is here) */
+        #action-panel { background: white; width: 340px; border-radius: 20px; border: 6px solid var(--fn-blue); padding: 20px; display: flex; flex-direction: column; color: black; min-height: 380px; }
+        #prompt-msg { font-size: 20px; color: #2d3436; margin-bottom: 15px; font-weight: bold; text-align: center; }
         
-        button { padding: 14px; font-size: 20px; border-radius: 12px; border: none; background: var(--fn-blue); color: white; cursor: pointer; font-weight: bold; width: 100%; border-bottom: 6px solid #0652dd; margin: 8px 0; text-transform: uppercase; }
-        button:active { transform: translateY(4px); border-bottom-width: 2px; }
-        button:disabled { background: #636e72; border-color: #2d3436; cursor: not-allowed; }
+        .panel-section { display: none; width: 100%; flex-direction: column; }
+        .show { display: flex !important; }
 
+        button { padding: 12px; font-size: 18px; border-radius: 10px; border: none; background: var(--fn-blue); color: white; cursor: pointer; font-weight: bold; margin: 5px 0; border-bottom: 4px solid #0652dd; }
         .btn-green { background: #2ecc71; border-color: #27ae60; }
-        .btn-orange { background: #e67e22; border-color: #d35400; font-size: 16px; width: 31%; margin: 2px; padding: 10px; }
-
-        .red-flash { animation: screenShake 0.4s; background: #ff4757 !important; }
-        @keyframes screenShake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+        .btn-red { background: #ff4757; border-color: #ff6b81; }
+        .btn-rps { background: #e67e22; border-color: #d35400; font-size: 14px; }
     </style>
 </head>
 <body id="body-main">
 
 <div id="lobby">
     <div class="lobby-card">
-        <h1 style="margin:0 0 15px 0;">QUEST LOBBY</h1>
-        <p>P1 (Red): <select id="sel0"><option>🐱</option><option>🐶</option><option>🤖</option></select></p>
-        <p>P2 (Green): <select id="sel1"><option>🐰</option><option>🐨</option><option>🐯</option></select></p>
-        <p>P3 (Blue): <select id="sel2"><option>🦁</option><option>🐼</option><option>🦊</option></select></p>
-        <button onclick="initGame()">BATTLE START</button>
+        <h1>BATTLE LOBBY</h1>
+        P1: <select id="sel0"><option>🐱</option><option>🐶</option></select><br>
+        P2: <select id="sel1"><option>🐰</option><option>🦊</option></select><br>
+        P3: <select id="sel2"><option>🐯</option><option>🐨</option></select><br><br>
+        <button onclick="initGame()">READY UP</button>
     </div>
 </div>
 
@@ -64,41 +60,42 @@
 
 <div id="game-area">
     <div class="board">
-        <div class="square" id="sq3">P3 HOME<br>🔵</div>
-        <div class="square" id="sq4" onclick="playerAction(4)">SUPERMARKET<br>🛒</div>
-        <div class="square" id="sq5" onclick="playerAction(5)">HOSPITAL<br>🏥</div>
-        <div class="square" id="sq6">P2 HOME<br>🟢</div>
-
-        <div class="square" id="sq2" onclick="playerAction(2)">BOOKSTORE<br>📚</div>
-        <div class="middle-zone"><div id="die-face" style="font-size:80px;">🎲</div></div>
-        <div class="square" id="sq7" onclick="playerAction(7)">POST OFFICE<br>✉️</div>
-
-        <div class="square" id="sq1" onclick="playerAction(1)">PARK<br>🌳</div>
-        <div class="square" id="sq8" onclick="playerAction(8)">TEA SHOP<br>🧋</div>
-
-        <div class="square" id="sq0">P1 HOME<br>🔴</div>
-        <div class="square" id="sq11" onclick="playerAction(11)">ZOO<br>🦁</div>
-        <div class="square" id="sq10" onclick="playerAction(10)">LIBRARY<br>📖</div>
-        <div class="square" id="sq9" style="background:#dfe6e9">FREE PARKING</div>
+        <div class="square" id="sq3">P3 BASE🔵</div>
+        <div class="square" id="sq4" onclick="handleTap(4)">SUPERMARKET🛒</div>
+        <div class="square" id="sq5" onclick="handleTap(5)">HOSPITAL🏥</div>
+        <div class="square" id="sq6">P2 BASE🟢</div>
+        <div class="square" id="sq2" onclick="handleTap(2)">BOOKSTORE📚</div>
+        <div class="middle-zone"><div id="die-face" style="font-size:60px;">🎲</div></div>
+        <div class="square" id="sq7" onclick="handleTap(7)">POST OFFICE✉️</div>
+        <div class="square" id="sq1" onclick="handleTap(1)">PARK🌳</div>
+        <div class="square" id="sq8" onclick="handleTap(8)">TEA SHOP🧋</div>
+        <div class="square" id="sq0">P1 BASE🔴</div>
+        <div class="square" id="sq11" onclick="handleTap(11)">ZOO🦁</div>
+        <div class="square" id="sq10" onclick="handleTap(10)">LIBRARY📖</div>
+        <div class="square" id="sq9">FREE GIFTS</div>
     </div>
 
     <div id="action-panel">
-        <div id="prompt-msg">ROLL TO START!</div>
-        <button id="roll-btn" onclick="tossDie()">ROLL DICE</button>
+        <div id="prompt-msg">P1'S TURN</div>
         
-        <div id="shop-panel" style="display:none; width:100%;">
-            <h2 id="loc-title" style="margin:5px 0; color:white;">LOCATION</h2>
-            <div id="loc-items"></div>
+        <div id="roll-sec" class="panel-section show">
+            <button onclick="toss()">ROLL DICE</button>
         </div>
 
-        <div id="fee-panel" style="display:none; width:100%; text-align:center;">
-            <h2 style="color:#ff4757;">⚠️ BASE FEE</h2>
-            <p style="font-size:14px;">Pay $50 or Play RPS for Free!</p>
-            <button class="btn-green" style="background:#eb4d4b" onclick="payBaseFee()">PAY $50 CASH</button>
-            <div style="display:flex; justify-content:space-between; margin-top:10px;">
-                <button class="btn-orange" onclick="runRPS('Rock')">✊</button>
-                <button class="btn-orange" onclick="runRPS('Paper')">✋</button>
-                <button class="btn-orange" onclick="runRPS('Scissors')">✌️</button>
+        <div id="shop-sec" class="panel-section">
+            <h3 id="shop-title">SHOP</h3>
+            <div id="shop-items"></div>
+        </div>
+
+        <div id="quest-sec" class="panel-section">
+            <h3 style="color:red; margin:0;">⚠️ VISITOR QUEST</h3>
+            <p style="font-size:14px;">You landed on a base!</p>
+            <button class="btn-red" onclick="payFee()">Pay $50 (Safe)</button>
+            <p style="font-size:12px; font-weight:bold;">OR CHALLENGE (RPS):</p>
+            <div style="display:flex; justify-content:space-between;">
+                <button class="btn-rps" onclick="playRPS('Rock')">✊</button>
+                <button class="btn-rps" onclick="playRPS('Paper')">✋</button>
+                <button class="btn-rps" onclick="playRPS('Scissors')">✌️</button>
             </div>
         </div>
     </div>
@@ -106,8 +103,8 @@
 
 <script>
     let players = [{pos:0, cash:250, items:new Set(), char:''}, {pos:6, cash:250, items:new Set(), char:''}, {pos:3, cash:250, items:new Set(), char:''}];
-    let activePlayer = 0, currentRoll = 0, nextPos = -1;
-    const locMap = {
+    let turn = 0, rollVal = 0, target = -1;
+    const locs = {
         1: { n: "PARK", i: [{n:"Kite", p:10}, {n:"Scooter", p:40}] },
         2: { n: "BOOKSTORE", i: [{n:"Pen", p:5}, {n:"Comic", p:35}] },
         4: { n: "SUPERMARKET", i: [{n:"Shield", p:25}, {n:"Medkit", p:60}] },
@@ -115,108 +112,99 @@
         7: { n: "POST OFFICE", i: [{n:"Stamp", p:5}, {n:"Parcel", p:30}] },
         8: { n: "TEA SHOP", i: [{n:"Slurp", p:35}, {n:"Chug", p:70}] },
         10: { n: "LIBRARY", i: [{n:"Notebook", p:10}, {n:"Book", p:45}] },
-        11: { n: "ZOO", i: [{n:"Ice Cream", p:20}, {n:"Llama", p:140}] }
+        11: { n: "ZOO", i: [{n:"Ice Cream", p:20}, {n: "Llama", p:140}] }
     };
 
     function initGame() {
         for(let i=0; i<3; i++) players[i].char = document.getElementById(`sel${i}`).value;
         document.getElementById('lobby').style.display = 'none';
-        refreshUI();
+        refresh();
     }
 
-    function tossDie() {
-        currentRoll = Math.floor(Math.random() * 6) + 1;
-        document.getElementById('die-face').innerText = currentRoll;
-        nextPos = (players[activePlayer].pos + currentRoll) % 12;
-        document.getElementById('prompt-msg').innerText = `P${activePlayer+1}: MOVE ${currentRoll} TILES!`;
-        document.getElementById('roll-btn').disabled = true;
+    function toss() {
+        rollVal = Math.floor(Math.random() * 6) + 1;
+        document.getElementById('die-face').innerText = rollVal;
+        target = (players[turn].pos + rollVal) % 12;
+        document.getElementById('prompt-msg').innerText = `Count ${rollVal} spaces!`;
+        document.getElementById('roll-sec').classList.remove('show');
     }
 
-    function playerAction(idx) {
-        if (currentRoll === 0) return;
-        if (idx !== nextPos) {
-            document.getElementById('body-main').classList.add('red-flash');
-            setTimeout(() => document.getElementById('body-main').classList.remove('red-flash'), 400);
-            return;
-        }
+    function handleTap(idx) {
+        if (rollVal === 0) return;
+        if (idx !== target) { alert("Wrong spot! Count again."); return; }
 
-        if (locMap[idx]) {
-            openShop(idx);
-        } else if ([0,3,6].includes(idx) && idx !== [0,6,3][activePlayer]) {
-            document.getElementById('fee-panel').style.display = 'block';
-            document.getElementById('prompt-msg').innerText = "VISITOR CHALLENGE!";
+        if (locs[idx]) {
+            showShop(idx);
+        } else if ([0,3,6].includes(idx) && idx !== [0,6,3][turn]) {
+            document.getElementById('quest-sec').classList.add('show');
         } else {
-            endTurn(idx);
+            finish(idx);
         }
     }
 
-    function openShop(idx) {
-        document.getElementById('shop-panel').style.display = 'block';
-        document.getElementById('loc-title').innerText = locMap[idx].n;
-        const list = document.getElementById('loc-items');
+    function showShop(idx) {
+        document.getElementById('shop-sec').classList.add('show');
+        document.getElementById('shop-title').innerText = locs[idx].n;
+        const list = document.getElementById('shop-items');
         list.innerHTML = '';
-        locMap[idx].i.forEach(item => {
+        locs[idx].i.forEach(item => {
             let b = document.createElement('button'); b.className = 'btn-green';
             b.innerText = `${item.n} ($${item.p})`;
             b.onclick = () => {
-                if(players[activePlayer].cash >= item.p) {
-                    players[activePlayer].cash -= item.p;
-                    players[activePlayer].items.add(idx);
-                    document.getElementById('shop-panel').style.display = 'none';
-                    endTurn(idx);
-                } else { alert("NOT ENOUGH CASH!"); }
+                if(players[turn].cash >= item.p) {
+                    players[turn].cash -= item.p; players[turn].items.add(idx);
+                    document.getElementById('shop-sec').classList.remove('show');
+                    finish(idx);
+                } else { alert("Not enough money!"); }
             };
             list.appendChild(b);
         });
     }
 
-    function runRPS(choice) {
+    function playRPS(p) {
         const moves = ["Rock", "Paper", "Scissors"];
         const cpu = moves[Math.floor(Math.random() * 3)];
-        if (choice === cpu) alert(`DRAW! Both picked ${cpu}. Safe passage!`);
-        else if ((choice === "Rock" && cpu === "Scissors") || (choice === "Paper" && cpu === "Rock") || (choice === "Scissors" && cpu === "Paper")) {
-            alert(`WIN! You beat ${cpu}. No fee!`);
+        if (p === cpu) { alert(`Draw! (${cpu}). No fee.`); }
+        else if ((p === "Rock" && cpu === "Scissors") || (p === "Paper" && cpu === "Rock") || (p === "Scissors" && cpu === "Paper")) {
+            alert(`You Win! (${cpu}). No fee!`);
         } else {
-            alert(`LOSS! ${cpu} beats ${choice}. Pay $100 penalty!`);
-            players[activePlayer].cash -= 100;
+            alert(`You Lose! (${cpu}). Pay $100 penalty!`);
+            players[turn].cash -= 100;
         }
-        document.getElementById('fee-panel').style.display = 'none';
-        endTurn(nextPos);
+        document.getElementById('quest-sec').classList.remove('show');
+        finish(target);
     }
 
-    function payBaseFee() {
-        players[activePlayer].cash -= 50;
-        document.getElementById('fee-panel').style.display = 'none';
-        endTurn(nextPos);
+    function payFee() {
+        players[turn].cash -= 50;
+        document.getElementById('quest-sec').classList.remove('show');
+        finish(target);
     }
 
-    function endTurn(idx) {
-        players[activePlayer].pos = idx;
-        if(players[activePlayer].items.size === 8) { alert("VICTORY ROYALE! Player " + (activePlayer+1) + " Wins!"); location.reload(); }
-        if(players[activePlayer].cash < 0) { alert("P" + (activePlayer+1) + " is broke! Game Over."); location.reload(); }
-        activePlayer = (activePlayer + 1) % 3;
-        currentRoll = 0;
-        document.getElementById('roll-btn').disabled = false;
-        refreshUI();
+    function finish(idx) {
+        players[turn].pos = idx;
+        if(players[turn].items.size === 8) { alert("Victory Royale! P"+(turn+1)+" wins!"); location.reload(); }
+        if(players[turn].cash < 0) { alert("P"+(turn+1)+" is broke! Game Over."); location.reload(); }
+        turn = (turn + 1) % 3; rollVal = 0;
+        document.getElementById('roll-sec').classList.add('show');
+        refresh();
     }
 
-    function refreshUI() {
+    function refresh() {
         document.querySelectorAll('.p-marker').forEach(m => m.remove());
         document.querySelectorAll('.square').forEach(s => s.classList.remove('turn-glow'));
         document.querySelectorAll('.player-status').forEach(s => s.classList.remove('active-status'));
-        
-        document.getElementById('stat' + activePlayer).classList.add('active-status');
-        document.getElementById('sq' + [0, 6, 3][activePlayer]).classList.add('turn-glow');
-        document.getElementById('sq' + players[activePlayer].pos).classList.add('turn-glow');
-
+        document.getElementById('stat' + turn).classList.add('active-status');
+        document.getElementById('sq' + [0, 6, 3][turn]).classList.add('turn-glow');
+        document.getElementById('sq' + players[turn].pos).classList.add('turn-glow');
         players.forEach((p, i) => {
             let m = document.createElement('span'); m.className = 'p-marker'; m.innerText = p.char;
-            m.style.left = (i * 14) + "px"; document.getElementById('sq' + p.pos).appendChild(m);
+            m.style.left = (i * 15) + "px"; document.getElementById('sq' + p.pos).appendChild(m);
             document.getElementById(`cash${i}`).innerText = p.cash;
             document.getElementById(`inv${i}`).innerText = p.items.size;
             document.getElementById(`icon${i}`).innerText = p.char;
         });
-        document.getElementById('prompt-msg').innerText = `P${activePlayer+1}'S TURN`;
+        document.getElementById('prompt-msg').innerText = `P${turn+1}'S TURN`;
     }
 </script>
 </body>
