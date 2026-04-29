@@ -4,64 +4,110 @@
     <title>3-Player Smart Shopper</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { font-family: 'Arial Rounded MT Bold', sans-serif; background: #55efc4; text-align: center; padding: 10px; }
-        #setup, #game-ui, #shop-ui { background: white; padding: 15px; border-radius: 15px; border: 4px solid #00b894; margin-bottom: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        :root { --main-bg: #81ecec; --board-bg: #ffffff; }
+        body { font-family: 'Arial Rounded MT Bold', sans-serif; background: var(--main-bg); text-align: center; padding: 10px; font-size: 20px; }
         
-        .board { display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); width: 360px; height: 360px; margin: auto; background: white; border: 5px solid #2d3436; gap: 5px; padding: 5px; }
-        .square { border: 2px solid #dfe6e9; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 11px; cursor: pointer; background: #fff; position: relative; }
-        .middle { grid-column: 2 / 4; grid-row: 2 / 4; background: #00b894; display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 10px; color: white; }
+        #setup, #game-ui, #shop-ui, #history-panel { 
+            background: white; padding: 20px; border-radius: 20px; border: 5px solid #00cec9; 
+            margin: 10px auto; max-width: 500px; box-shadow: 0 8px 20px rgba(0,0,0,0.2); 
+        }
+
+        /* Flash Red Animation */
+        @keyframes flashRed {
+            0% { background-color: white; }
+            50% { background-color: #ff7675; }
+            100% { background-color: white; }
+        }
+        .error-flash { animation: flashRed 0.4s; }
+
+        .board { 
+            display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); 
+            width: 400px; height: 400px; margin: auto; background: var(--board-bg); border: 6px solid #2d3436; gap: 6px; padding: 6px;
+        }
         
-        .p-marker { font-size: 24px; position: absolute; transition: all 0.3s; text-shadow: 1px 1px 2px black; }
+        .square { 
+            border: 2px solid #b2bec3; display: flex; flex-direction: column; 
+            justify-content: center; align-items: center; font-size: 16px; cursor: pointer; 
+            background: #fff; position: relative; font-weight: bold;
+        }
+
+        .middle { grid-column: 2 / 4; grid-row: 2 / 4; background: #00cec9; display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 15px; color: white; }
+        .p-marker { font-size: 35px; position: absolute; transition: all 0.3s; z-index: 20; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
         
-        .player-box { display: inline-block; width: 30%; padding: 5px; border: 2px solid #ddd; border-radius: 10px; font-size: 11px; }
-        .current-turn { border-color: #d63031; background: #ffeaa7; }
-        
-        button { padding: 10px 20px; font-size: 16px; border-radius: 20px; border: none; background: #0984e3; color: white; cursor: pointer; font-weight: bold; margin: 5px; }
-        .btn-buy { background: #00b894; margin: 5px; width: 80%; }
-        
-        #shop-ui { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 100; width: 280px; }
+        button { padding: 15px 30px; font-size: 22px; border-radius: 40px; border: none; background: #0984e3; color: white; cursor: pointer; font-weight: bold; }
+        .btn-buy { background: #00b894; width: 90%; margin: 10px; font-size: 20px; }
+
+        /* History List */
+        #history-list { font-size: 16px; text-align: left; max-height: 150px; overflow-y: auto; }
+        .history-item { border-bottom: 1px solid #eee; padding: 5px; }
+
+        #shop-ui { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 100; width: 320px; }
+        .player-box { display: inline-block; width: 30%; padding: 10px; border: 3px solid #ddd; border-radius: 15px; }
+        .current-turn { border-color: #d63031; background: #ffeaa7; transform: scale(1.05); }
     </style>
 </head>
-<body>
+<body id="main-body">
 
 <div id="setup">
-    <h3>3-Player Setup</h3>
-    P1: <select id="p0-av"><option>🐱</option><option>🐶</option></select>
-    P2: <select id="p1-av"><option>🐰</option><option>🦊</option></select>
-    P3: <select id="p2-av"><option>🐯</option><option>🐨</option></select>
-    <br><br><button onclick="startGame()">START QUEST</button>
+    <h2 style="font-size: 30px;">Choose Avatars</h2>
+    P1: <select id="p0-av" style="font-size:20px;"><option>🐱</option><option>🐶</option></select>
+    P2: <select id="p1-av" style="font-size:20px;"><option>🐰</option><option>🦊</option></select>
+    P3: <select id="p2-av" style="font-size:20px;"><option>🐯</option><option>🐨</option></select>
+    <br><br><button onclick="startGame()">START AT GO 🚩</button>
 </div>
 
 <div id="game-ui" style="display:none">
     <div id="player-stats">
-        <div class="player-box" id="box-0">P1 <span id="p0-icon"></span><br>$<span id="p0-m">500</span><br>Items: <span id="p0-c">0</span>/8</div>
-        <div class="player-box" id="box-1">P2 <span id="p1-icon"></span><br>$<span id="p1-m">500</span><br>Items: <span id="p1-c">0</span>/8</div>
-        <div class="player-box" id="box-2">P3 <span id="p2-icon"></span><br>$<span id="p2-m">500</span><br>Items: <span id="p2-c">0</span>/8</div>
+        <div class="player-box" id="box-0">P1 <span id="p0-icon"></span><br>$<span id="p0-m">500</span></div>
+        <div class="player-box" id="box-1">P2 <span id="p1-icon"></span><br>$<span id="p1-m">500</span></div>
+        <div class="player-box" id="box-2">P3 <span id="p2-icon"></span><br>$<span id="p2-m">500</span></div>
     </div>
-    <div id="msg" style="margin-top:10px; font-weight:bold;">P1: Roll to move!</div>
+    <p id="msg" style="font-size: 24px; color: #d33682;">Roll to start!</p>
 </div>
 
 <div class="board" id="main-board" style="display:none">
     <div class="square" id="s0" onclick="handleTap(0)">Park🚲</div>
-    <div class="square" id="s1" onclick="handleTap(1)">Library📖</div>
-    <div class="square" id="s2" onclick="handleTap(2)">Hospital💊</div>
-    <div class="square" id="s3" onclick="handleTap(3)">Market🍎</div>
-    <div class="square" id="s7" onclick="handleTap(7)">Zoo🦁</div>
-    <div class="middle"><div id="dice-val">🎲</div><button id="rollBtn" onclick="roll()">ROLL</button></div>
-    <div class="square" id="s4" onclick="handleTap(4)">Bookstore📚</div>
-    <div class="square" id="s6" onclick="handleTap(6)">Post Office✉️</div>
-    <div class="square" id="s5" onclick="handleTap(5)">Tea Shop🧋</div>
-    <div class="square" style="background:#eee">GO</div>
-    <div class="square" style="background:#eee">FREE</div>
+    <div class="square" id="s1" onclick="checkClick(1)">Library📖</div>
+    <div class="square" id="s2" onclick="checkClick(2)">Hospital💊</div>
+    <div class="square" id="s3" onclick="checkClick(3)">Market🍎</div>
+    <div class="square" id="s7" onclick="checkClick(7)">Zoo🦁</div>
+    <div class="middle">
+        <div id="dice-val" style="font-size: 60px;">🎲</div>
+        <button id="rollBtn" onclick="roll()">ROLL</button>
+    </div>
+    <div class="square" id="s4" onclick="checkClick(4)">Bookstore📚</div>
+    <div class="square" id="s6" onclick="checkClick(6)">Post Office✉️</div>
+    <div class="square" id="s5" onclick="checkClick(5)">Tea Shop🧋</div>
+    <div class="square" id="start-node" style="background:#ffeaa7">START🚩</div>
+    <div class="square" style="background:#dfe6e9">FREE🎁</div>
+</div>
+
+<div id="history-panel" style="display:none">
+    <h4 style="margin:0">Purchase Monitor</h4>
+    <div id="history-list"></div>
 </div>
 
 <div id="shop-ui">
     <h3 id="shop-name">Shop</h3>
-    <p>Choose one item to buy:</p>
     <div id="shop-options"></div>
 </div>
 
 <script>
+    // Sound generation logic
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playDiceSound() {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+    }
+
     let players = [
         { pos: -1, money: 500, items: new Set(), avatar: '' },
         { pos: -1, money: 500, items: new Set(), avatar: '' },
@@ -82,97 +128,88 @@
 
     function startGame() {
         for(let i=0; i<3; i++) players[i].avatar = document.getElementById(`p${i}-av`).value;
-        for(let i=0; i<3; i++) document.getElementById(`p${i}-icon`).innerText = players[i].avatar;
         document.getElementById('setup').style.display = 'none';
         document.getElementById('game-ui').style.display = 'block';
         document.getElementById('main-board').style.display = 'grid';
+        document.getElementById('history-panel').style.display = 'block';
+        updateBoard();
         updateTurnUI();
     }
 
     function roll() {
+        playDiceSound();
         rollVal = Math.floor(Math.random() * 6) + 1;
         document.getElementById('dice-val').innerText = rollVal;
         let p = players[turn];
         targetPos = (p.pos === -1) ? (rollVal - 1) % 8 : (p.pos + rollVal) % 8;
-        document.getElementById('msg').innerText = `Count ${rollVal} spaces and tap!`;
+        document.getElementById('msg').innerText = `P${turn+1}: Count ${rollVal} spaces!`;
         document.getElementById('rollBtn').disabled = true;
     }
 
-    function handleTap(idx) {
+    function checkClick(idx) {
         if (rollVal === 0) return;
         if (idx === targetPos) {
-            openShop(idx);
+            const shop = shops[idx];
+            document.getElementById('shop-ui').style.display = 'block';
+            document.getElementById('shop-name').innerText = shop.name;
+            const container = document.getElementById('shop-options');
+            container.innerHTML = '';
+            shop.items.forEach(item => {
+                let btn = document.createElement('button');
+                btn.className = 'btn-buy';
+                btn.innerText = `${item.n} ($${item.p})`;
+                btn.onclick = () => buyItem(idx, item.n, item.p);
+                container.appendChild(btn);
+            });
         } else {
-            document.getElementById('msg').innerText = "Wrong spot! Count again.";
+            document.getElementById('main-body').classList.add('error-flash');
+            setTimeout(() => document.getElementById('main-body').classList.remove('error-flash'), 400);
+            document.getElementById('msg').innerText = "❌ Wrong! Count again!";
         }
     }
 
-    function openShop(idx) {
-        const shop = shops[idx];
-        document.getElementById('shop-ui').style.display = 'block';
-        document.getElementById('shop-name').innerText = shop.name;
-        const container = document.getElementById('shop-options');
-        container.innerHTML = '';
-        
-        shop.items.forEach(item => {
-            let btn = document.createElement('button');
-            btn.className = 'btn-buy';
-            btn.innerText = `${item.n} ($${item.p})`;
-            btn.onclick = () => buyItem(idx, item.p);
-            container.appendChild(btn);
-        });
-    }
-
-    function buyItem(idx, cost) {
+    function buyItem(idx, itemName, cost) {
         let p = players[turn];
         if (p.money >= cost) {
             p.money -= cost;
             p.pos = idx;
             p.items.add(idx);
+            
+            const hist = document.getElementById('history-list');
+            hist.innerHTML = `<div class="history-item">${p.avatar} bought ${itemName} at ${shops[idx].name} ($${cost})</div>` + hist.innerHTML;
+            
             document.getElementById('shop-ui').style.display = 'none';
-            checkGameOver(p);
             updateBoard();
-            nextTurn();
+            
+            if (p.items.size === 8) { alert(p.avatar + " WINS!"); location.reload(); }
+            
+            turn = (turn + 1) % 3;
+            rollVal = 0;
+            document.getElementById('rollBtn').disabled = false;
+            updateTurnUI();
         } else {
-            alert("Not enough money! Choose a cheaper item.");
+            alert("Too expensive! Pick something else.");
         }
-    }
-
-    function checkGameOver(p) {
-        if (p.money <= 0 && p.items.size < 8) {
-            alert(`GAME OVER for Player ${turn+1}!`);
-            location.reload();
-        }
-        if (p.items.size === 8) {
-            alert(`CONGRATULATIONS! Player ${turn+1} wins the quest!`);
-            location.reload();
-        }
-    }
-
-    function nextTurn() {
-        turn = (turn + 1) % 3;
-        rollVal = 0;
-        document.getElementById('rollBtn').disabled = false;
-        updateTurnUI();
     }
 
     function updateTurnUI() {
-        for(let i=0; i<3; i++) document.getElementById(`box-${i}`).className = (i === turn) ? 'player-box current-turn' : 'player-box';
+        for(let i=0; i<3; i++) {
+            document.getElementById(`box-${i}`).className = (i === turn) ? 'player-box current-turn' : 'player-box';
+            document.getElementById(`p${i}-icon`).innerText = players[i].avatar;
+        }
         document.getElementById('msg').innerText = `P${turn+1}'s Turn (${players[turn].avatar})`;
     }
 
     function updateBoard() {
         document.querySelectorAll('.p-marker').forEach(m => m.remove());
         players.forEach((p, i) => {
-            if(p.pos !== -1) {
-                let s = document.createElement('span');
-                s.className = 'p-marker';
-                s.innerText = p.avatar;
-                s.style.top = (i * 8) + "px";
-                document.getElementById('s' + p.pos).appendChild(s);
-            }
+            let container = (p.pos === -1) ? document.getElementById('start-node') : document.getElementById('s' + p.pos);
+            let s = document.createElement('span');
+            s.className = 'p-marker';
+            s.innerText = p.avatar;
+            s.style.left = (i * 20) + "px";
+            container.appendChild(s);
             document.getElementById(`p${i}-m`).innerText = p.money;
-            document.getElementById(`p${i}-c`).innerText = p.items.size;
         });
     }
 </script>
