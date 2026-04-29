@@ -1,211 +1,227 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Fortnite Monopoly: Final Fix</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        :root { --fn-blue: #1e90ff; --fn-purple: #8e44ad; --fn-yellow: #f1c40f; --fn-dark: #2f3542; }
-        body { font-family: 'Arial Black', sans-serif; background: linear-gradient(135deg, #1e3799, #8e44ad); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; color: white; }
-        
-        /* LOBBY */
-        #lobby { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        .lobby-card { background: white; padding: 30px; border-radius: 20px; border: 8px solid var(--fn-blue); color: black; text-align: center; }
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fortnite Monopoly: Arcade Edition</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@700;900&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Nunito',sans-serif;background:#0d1b2a;color:#fff;min-height:100vh;overflow-x:hidden}
+  :root{--fn-blue:#00c3ff;--fn-yellow:#ffe566;--fn-purple:#8b5cf6;--fn-green:#22c55e;--fn-orange:#f97316;--fn-red:#ef4444;--fn-dark:#0d1b2a;--fn-card:#162235}
+  
+  /* LOBBY SCREEN */
+  #lobby{position:fixed;inset:0;background:rgba(0,0,0,0.97);z-index:900;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:20px}
+  .lobby-box{background:linear-gradient(145deg,#162235,#1e3a5f);padding:30px;border-radius:20px;border:3px solid var(--fn-blue);box-shadow:0 0 40px rgba(0,195,255,0.3);text-align:center;max-width:420px;width:100%}
+  .lobby-title{font-family:'Bangers',cursive;font-size:42px;letter-spacing:3px;color:var(--fn-yellow);text-shadow:3px 3px 0 #0d1b2a;margin-bottom:5px}
+  .player-setup{background:rgba(0,0,0,0.3);border-radius:12px;padding:12px;margin:8px 0;display:flex;align-items:center;gap:10px;border:1px solid rgba(255,255,255,0.1)}
+  .player-setup select{background:#0d1b2a;color:#fff;border:1px solid var(--fn-blue);border-radius:8px;padding:6px 8px;font-size:20px;flex:1;cursor:pointer}
+  .start-btn{background:var(--fn-yellow);color:#0d1b2a;border:none;padding:14px 28px;font-size:22px;font-family:'Bangers',cursive;letter-spacing:2px;border-radius:12px;cursor:pointer;width:100%;margin-top:15px;border-bottom:5px solid #c8a200;}
 
-        /* HUD */
-        #top-bar { background: rgba(0,0,0,0.85); padding: 10px; display: flex; justify-content: space-around; border-bottom: 5px solid var(--fn-yellow); }
-        .player-status { background: var(--fn-dark); padding: 10px; border-radius: 12px; width: 30%; font-size: 15px; border: 3px solid #57606f; }
-        .active-status { border-color: var(--fn-yellow); box-shadow: 0 0 15px var(--fn-yellow); }
+  /* HUD */
+  #top-bar{background:rgba(0,0,0,0.85);padding:8px 12px;display:flex;justify-content:space-around;gap:8px;border-bottom:3px solid var(--fn-blue)}
+  .pbox{background:var(--fn-card);padding:8px 12px;border-radius:10px;text-align:center;flex:1;border:2px solid #2a3f5f;transition:all 0.3s;font-size:13px}
+  .pbox.active{border-color:var(--fn-yellow);box-shadow:0 0 15px rgba(255,229,102,0.4)}
+  .pbox .money{color:var(--fn-green);font-weight:900;font-size:16px}
 
-        /* LAYOUT */
-        #game-area { display: flex; flex: 1; padding: 20px; gap: 20px; justify-content: center; align-items: center; }
+  /* BOARD */
+  #board-wrap{flex:1;display:flex;justify-content:center;align-items:center;padding:16px}
+  .board{display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(4,1fr);width:320px;height:320px;gap:4px;background:#071422;border:4px solid var(--fn-blue);border-radius:12px;padding:4px}
+  .sq{background:#162235;border:1px solid #2a3f5f;border-radius:8px;display:flex;flex-direction:column;justify-content:center;align-items:center;font-size:10px;color:#cbd5e1;cursor:pointer;position:relative;text-align:center;padding:2px;font-weight:700;}
+  .middle{grid-column:2/4;grid-row:2/4;background:linear-gradient(135deg,#071422,#0d2a45);border-radius:10px;display:flex;flex-direction:column;justify-content:center;align-items:center;border:2px solid var(--fn-blue)}
+  
+  /* HIGHLIGHTS */
+  .correct-dest{border-color:var(--fn-yellow)!important;box-shadow:0 0 10px rgba(255,229,102,0.5)!important;}
+  .my-base-sq{border-color:var(--fn-purple)!important;background:linear-gradient(135deg,#2a1a5e,#4a2080)!important}
+  .p-marker{position:absolute;font-size:13px;z-index:10;pointer-events:none}
 
-        /* BOARD */
-        .board { display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); width: 440px; height: 440px; background: #000; border: 10px solid #111; gap: 6px; padding: 6px; }
-        .square { background: white; border-radius: 4px; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 11px; color: #111; cursor: pointer; position: relative; font-weight: bold; text-align: center; }
-        .middle-zone { grid-column: 2 / 4; grid-row: 2 / 4; background: var(--fn-purple); border-radius: 15px; display: flex; flex-direction: column; justify-content: center; align-items: center; border: 4px solid white; }
-        
-        .turn-glow { background: var(--fn-yellow) !important; color: black !important; }
-        .p-marker { font-size: 45px; position: absolute; transition: 0.3s; z-index: 100; text-shadow: 2px 2px 4px rgba(0,0,0,0.4); }
-
-        /* ACTION PANEL (The Fix is here) */
-        #action-panel { background: white; width: 340px; border-radius: 20px; border: 6px solid var(--fn-blue); padding: 20px; display: flex; flex-direction: column; color: black; min-height: 380px; }
-        #prompt-msg { font-size: 20px; color: #2d3436; margin-bottom: 15px; font-weight: bold; text-align: center; }
-        
-        .panel-section { display: none; width: 100%; flex-direction: column; }
-        .show { display: flex !important; }
-
-        button { padding: 12px; font-size: 18px; border-radius: 10px; border: none; background: var(--fn-blue); color: white; cursor: pointer; font-weight: bold; margin: 5px 0; border-bottom: 4px solid #0652dd; }
-        .btn-green { background: #2ecc71; border-color: #27ae60; }
-        .btn-red { background: #ff4757; border-color: #ff6b81; }
-        .btn-rps { background: #e67e22; border-color: #d35400; font-size: 14px; }
-    </style>
+  /* SIDE PANEL */
+  #side-panel{width:240px;background:rgba(0,0,0,0.6);border-left:3px solid var(--fn-blue);display:flex;flex-direction:column;padding:12px;gap:8px;}
+  #msg-box{background:var(--fn-card);border-radius:10px;padding:10px;border:1px solid rgba(0,195,255,0.3);font-size:13px;color:var(--fn-yellow);font-weight:900;text-align:center;min-height:44px;}
+  .fn-btn{background:var(--fn-blue);color:#0d1b2a;border:none;padding:10px;font-size:16px;font-family:'Bangers',cursive;border-radius:10px;cursor:pointer;width:100%;border-bottom:4px solid #0082aa;margin-top:4px}
+  .panel{background:var(--fn-card);border-radius:12px;border:2px solid rgba(0,195,255,0.3);padding:10px}
+  .rps-row{display:flex;gap:6px;margin-top:8px}
+  .rps-btn{flex:1;font-size:24px;background:rgba(255,255,255,0.08);border:2px solid rgba(255,255,255,0.2);border-radius:10px;cursor:pointer}
+</style>
 </head>
-<body id="body-main">
+<body>
 
 <div id="lobby">
-    <div class="lobby-card">
-        <h1>BATTLE LOBBY</h1>
-        P1: <select id="sel0"><option>🐱</option><option>🐶</option></select><br>
-        P2: <select id="sel1"><option>🐰</option><option>🦊</option></select><br>
-        P3: <select id="sel2"><option>🐯</option><option>🐨</option></select><br><br>
-        <button onclick="initGame()">READY UP</button>
-    </div>
+  <div class="lobby-box">
+    <div class="lobby-title">🎮 QUEST LOBBY</div>
+    <div class="player-setup"><label>P1</label><select id="av0"><option value="🦊">🦊 Fox</option><option value="🐯">🐯 Tiger</option></select></div>
+    <div class="player-setup"><label>P2</label><select id="av1"><option value="🐺">🐺 Wolf</option><option value="🐸">🐸 Frog</option></select></div>
+    <div class="player-setup"><label>P3</label><select id="av2"><option value="🦋">🦋 Butterfly</option><option value="🐉">🐉 Dragon</option></select></div>
+    <button class="start-btn" onclick="startGame()">⚡ DEPLOY!</button>
+  </div>
 </div>
 
 <div id="top-bar">
-    <div class="player-status" id="stat0">P1 <span id="icon0"></span><br>$<span id="cash0">250</span> | 🎒 <span id="inv0">0</span>/8</div>
-    <div class="player-status" id="stat1">P2 <span id="icon1"></span><br>$<span id="cash1">250</span> | 🎒 <span id="inv1">0</span>/8</div>
-    <div class="player-status" id="stat2">P3 <span id="icon2"></span><br>$<span id="cash2">250</span> | 🎒 <span id="inv2">0</span>/8</div>
+  <div class="pbox" id="pbox0"><div class="av" id="pav0"></div><div class="money">$<span id="pm0">250</span></div><div class="stat">🎒 <span id="pc0">0</span>/8</div></div>
+  <div class="pbox" id="pbox1"><div class="av" id="pav1"></div><div class="money">$<span id="pm1">250</span></div><div class="stat">🎒 <span id="pc1">0</span>/8</div></div>
+  <div class="pbox" id="pbox2"><div class="av" id="pav2"></div><div class="money">$<span id="pm2">250</span></div><div class="stat">🎒 <span id="pc2">0</span>/8</div></div>
 </div>
 
-<div id="game-area">
-    <div class="board">
-        <div class="square" id="sq3">P3 BASE🔵</div>
-        <div class="square" id="sq4" onclick="handleTap(4)">SUPERMARKET🛒</div>
-        <div class="square" id="sq5" onclick="handleTap(5)">HOSPITAL🏥</div>
-        <div class="square" id="sq6">P2 BASE🟢</div>
-        <div class="square" id="sq2" onclick="handleTap(2)">BOOKSTORE📚</div>
-        <div class="middle-zone"><div id="die-face" style="font-size:60px;">🎲</div></div>
-        <div class="square" id="sq7" onclick="handleTap(7)">POST OFFICE✉️</div>
-        <div class="square" id="sq1" onclick="handleTap(1)">PARK🌳</div>
-        <div class="square" id="sq8" onclick="handleTap(8)">TEA SHOP🧋</div>
-        <div class="square" id="sq0">P1 BASE🔴</div>
-        <div class="square" id="sq11" onclick="handleTap(11)">ZOO🦁</div>
-        <div class="square" id="sq10" onclick="handleTap(10)">LIBRARY📖</div>
-        <div class="square" id="sq9">FREE GIFTS</div>
+<div style="display:flex; flex:1;">
+  <div id="board-wrap">
+    <div class="board" id="board">
+      <div class="sq" id="sq3" onclick="clickSq(3)"><div class="icon">🔵</div>P3 Base</div>
+      <div class="sq" id="sq4" onclick="clickSq(4)"><div class="icon">🛒</div>Market</div>
+      <div class="sq" id="sq5" onclick="clickSq(5)"><div class="icon">🏥</div>Hospital</div>
+      <div class="sq" id="sq6" onclick="clickSq(6)"><div class="icon">🟢</div>P2 Base</div>
+      <div class="sq" id="sq2" onclick="clickSq(2)"><div class="icon">📚</div>Bookstore</div>
+      <div class="middle"><div id="dice" style="font-size:52px">🎲</div></div>
+      <div class="sq" id="sq7" onclick="clickSq(7)"><div class="icon">✉️</div>Post Office</div>
+      <div class="sq" id="sq1" onclick="clickSq(1)"><div class="icon">🌳</div>Park</div>
+      <div class="sq" id="sq8" onclick="clickSq(8)"><div class="icon">🧋</div>Tea Shop</div>
+      <div class="sq" id="sq0" onclick="clickSq(0)"><div class="icon">🔴</div>P1 Base</div>
+      <div class="sq" id="sq11" onclick="clickSq(11)"><div class="icon">🦁</div>Zoo</div>
+      <div class="sq" id="sq10" onclick="clickSq(10)"><div class="icon">📖</div>Library</div>
+      <div class="sq" id="sq9" onclick="clickSq(9)"><div class="icon">⭐</div>Free Space</div>
+    </div>
+  </div>
+
+  <div id="side-panel">
+    <div id="msg-box">Welcome!</div>
+    <button class="fn-btn" id="rollBtn" onclick="rollDice()">🎲 ROLL DICE</button>
+    
+    <div class="panel" id="shop-panel" style="display:none">
+        <div id="shop-title" style="font-weight:900; color:var(--fn-blue); margin-bottom:10px;">SHOP</div>
+        <div id="shop-items"></div>
+        <button class="fn-btn" onclick="endTurn()">Skip</button>
     </div>
 
-    <div id="action-panel">
-        <div id="prompt-msg">P1'S TURN</div>
-        
-        <div id="roll-sec" class="panel-section show">
-            <button onclick="toss()">ROLL DICE</button>
-        </div>
-
-        <div id="shop-sec" class="panel-section">
-            <h3 id="shop-title">SHOP</h3>
-            <div id="shop-items"></div>
-        </div>
-
-        <div id="quest-sec" class="panel-section">
-            <h3 style="color:red; margin:0;">⚠️ VISITOR QUEST</h3>
-            <p style="font-size:14px;">You landed on a base!</p>
-            <button class="btn-red" onclick="payFee()">Pay $50 (Safe)</button>
-            <p style="font-size:12px; font-weight:bold;">OR CHALLENGE (RPS):</p>
-            <div style="display:flex; justify-content:space-between;">
-                <button class="btn-rps" onclick="playRPS('Rock')">✊</button>
-                <button class="btn-rps" onclick="playRPS('Paper')">✋</button>
-                <button class="btn-rps" onclick="playRPS('Scissors')">✌️</button>
+    <div class="panel" id="base-panel" style="display:none">
+        <div style="color:var(--fn-red); font-weight:900;">Enemy Base!</div>
+        <button class="fn-btn" style="background:var(--fn-red)" onclick="payFee()">Pay $50</button>
+        <button class="fn-btn" style="background:var(--fn-purple)" onclick="showRPS()">Challenge RPS!</button>
+        <div id="rps-area" style="display:none; margin-top:10px;">
+            <div class="rps-row">
+                <button class="rps-btn" onclick="playRPS('Rock')">✊</button>
+                <button class="rps-btn" onclick="playRPS('Paper')">🖐️</button>
+                <button class="rps-btn" onclick="playRPS('Scissors')">✌️</button>
             </div>
+            <div id="rps-result" style="font-size:12px; margin-top:5px;"></div>
         </div>
     </div>
+  </div>
 </div>
 
 <script>
-    let players = [{pos:0, cash:250, items:new Set(), char:''}, {pos:6, cash:250, items:new Set(), char:''}, {pos:3, cash:250, items:new Set(), char:''}];
-    let turn = 0, rollVal = 0, target = -1;
-    const locs = {
-        1: { n: "PARK", i: [{n:"Kite", p:10}, {n:"Scooter", p:40}] },
-        2: { n: "BOOKSTORE", i: [{n:"Pen", p:5}, {n:"Comic", p:35}] },
-        4: { n: "SUPERMARKET", i: [{n:"Shield", p:25}, {n:"Medkit", p:60}] },
-        5: { n: "HOSPITAL", i: [{n:"Bandage", p:10}, {n:"Potion", p:85}] },
-        7: { n: "POST OFFICE", i: [{n:"Stamp", p:5}, {n:"Parcel", p:30}] },
-        8: { n: "TEA SHOP", i: [{n:"Slurp", p:35}, {n:"Chug", p:70}] },
-        10: { n: "LIBRARY", i: [{n:"Notebook", p:10}, {n:"Book", p:45}] },
-        11: { n: "ZOO", i: [{n:"Ice Cream", p:20}, {n: "Llama", p:140}] }
-    };
+const SHOPS={
+  1:{name:"Park",items:[{n:"Kite",p:10,e:"🪁"}]},
+  2:{name:"Bookstore",items:[{n:"Pen",p:5,e:"✏️"}]},
+  4:{name:"Supermarket",items:[{n:"Shield",p:25,e:"🛡️"}]},
+  5:{name:"Hospital",items:[{n:"Medkit",p:60,e:"🩹"}]},
+  7:{name:"Post Office",items:[{n:"Stamp",p:5,e:"📮"}]},
+  8:{name:"Tea Shop",items:[{n:"Slurp Juice",p:35,e:"🧋"}]},
+  10:{name:"Library",items:[{n:"Book",p:45,e:"📕"}]},
+  11:{name:"Zoo",items:[{n:"Toy Llama",p:140,e:"🦙"}]}
+};
+const BASE_POS=[0,6,3]; 
+let players=[{pos:0,money:250,items:[]},{pos:6,money:250,items:[]},{pos:3,money:250,items:[]}];
+let turn=0, rollVal=0, targetPos=-1;
 
-    function initGame() {
-        for(let i=0; i<3; i++) players[i].char = document.getElementById(`sel${i}`).value;
-        document.getElementById('lobby').style.display = 'none';
-        refresh();
+function startGame(){
+  for(let i=0;i<3;i++) players[i].avatar=document.getElementById('av'+i).value;
+  document.getElementById('lobby').style.display='none';
+  updateAll();
+}
+
+function rollDice(){
+  if(rollVal!==0) return;
+  rollVal=Math.floor(Math.random()*6)+1;
+  document.getElementById('dice').textContent=rollVal;
+  targetPos=(players[turn].pos+rollVal)%12;
+  document.getElementById('rollBtn').disabled=true;
+  updateBoard();
+}
+
+function clickSq(idx){
+  if(rollVal===0 || idx!==targetPos) return;
+  players[turn].pos=idx;
+  document.getElementById('shop-panel').style.display='none';
+  document.getElementById('base-panel').style.display='none';
+
+  if(BASE_POS.includes(idx) && idx!==BASE_POS[turn]){
+      document.getElementById('base-panel').style.display='block';
+  } else if(SHOPS[idx]){
+      showShop(idx);
+  } else {
+      setTimeout(endTurn, 500);
+  }
+  updateAll();
+}
+
+function showShop(idx){
+    const s = SHOPS[idx];
+    document.getElementById('shop-title').innerText = s.name;
+    const cont = document.getElementById('shop-items');
+    cont.innerHTML = '';
+    s.items.forEach(item => {
+        const b = document.createElement('button');
+        b.className = 'fn-btn';
+        b.style.background = 'var(--fn-green)';
+        b.innerText = `Buy ${item.e} ($${item.p})`;
+        b.onclick = () => {
+            if(players[turn].money >= item.p){
+                players[turn].money -= item.p;
+                players[turn].items.push(item);
+                endTurn();
+            }
+        };
+        cont.appendChild(b);
+    });
+    document.getElementById('shop-panel').style.display='block';
+}
+
+function showRPS(){ document.getElementById('rps-area').style.display='block'; }
+
+function playRPS(p){
+    const opts = ['Rock','Paper','Scissors'];
+    const cpu = opts[Math.floor(Math.random()*3)];
+    if(p===cpu){ alert("Draw!"); }
+    else if((p==='Rock'&&cpu==='Scissors')||(p==='Paper'&&cpu==='Rock')||(p==='Scissors'&&cpu==='Paper')){
+        alert("You Win! Free stay.");
+    } else {
+        alert("You Lose! Paid $100.");
+        players[turn].money -= 100;
     }
+    endTurn();
+}
 
-    function toss() {
-        rollVal = Math.floor(Math.random() * 6) + 1;
-        document.getElementById('die-face').innerText = rollVal;
-        target = (players[turn].pos + rollVal) % 12;
-        document.getElementById('prompt-msg').innerText = `Count ${rollVal} spaces!`;
-        document.getElementById('roll-sec').classList.remove('show');
-    }
+function payFee(){ players[turn].money -= 50; endTurn(); }
 
-    function handleTap(idx) {
-        if (rollVal === 0) return;
-        if (idx !== target) { alert("Wrong spot! Count again."); return; }
+function endTurn(){
+  if(players[turn].items.length>=8){ alert("P"+(turn+1)+" Victory Royale!"); location.reload(); return; }
+  turn=(turn+1)%3; rollVal=0; targetPos=-1;
+  document.getElementById('rollBtn').disabled=false;
+  document.getElementById('shop-panel').style.display='none';
+  document.getElementById('base-panel').style.display='none';
+  document.getElementById('rps-area').style.display='none';
+  updateAll();
+}
 
-        if (locs[idx]) {
-            showShop(idx);
-        } else if ([0,3,6].includes(idx) && idx !== [0,6,3][turn]) {
-            document.getElementById('quest-sec').classList.add('show');
-        } else {
-            finish(idx);
-        }
-    }
+function updateAll(){
+  for(let i=0;i<3;i++){
+    document.getElementById('pav'+i).textContent=players[i].avatar;
+    document.getElementById('pm'+i).textContent=players[i].money;
+    document.getElementById('pc'+i).textContent=players[i].items.length;
+    document.getElementById('pbox'+i).className='pbox'+(i===turn?' active':'');
+  }
+  updateBoard();
+}
 
-    function showShop(idx) {
-        document.getElementById('shop-sec').classList.add('show');
-        document.getElementById('shop-title').innerText = locs[idx].n;
-        const list = document.getElementById('shop-items');
-        list.innerHTML = '';
-        locs[idx].i.forEach(item => {
-            let b = document.createElement('button'); b.className = 'btn-green';
-            b.innerText = `${item.n} ($${item.p})`;
-            b.onclick = () => {
-                if(players[turn].cash >= item.p) {
-                    players[turn].cash -= item.p; players[turn].items.add(idx);
-                    document.getElementById('shop-sec').classList.remove('show');
-                    finish(idx);
-                } else { alert("Not enough money!"); }
-            };
-            list.appendChild(b);
-        });
-    }
-
-    function playRPS(p) {
-        const moves = ["Rock", "Paper", "Scissors"];
-        const cpu = moves[Math.floor(Math.random() * 3)];
-        if (p === cpu) { alert(`Draw! (${cpu}). No fee.`); }
-        else if ((p === "Rock" && cpu === "Scissors") || (p === "Paper" && cpu === "Rock") || (p === "Scissors" && cpu === "Paper")) {
-            alert(`You Win! (${cpu}). No fee!`);
-        } else {
-            alert(`You Lose! (${cpu}). Pay $100 penalty!`);
-            players[turn].cash -= 100;
-        }
-        document.getElementById('quest-sec').classList.remove('show');
-        finish(target);
-    }
-
-    function payFee() {
-        players[turn].cash -= 50;
-        document.getElementById('quest-sec').classList.remove('show');
-        finish(target);
-    }
-
-    function finish(idx) {
-        players[turn].pos = idx;
-        if(players[turn].items.size === 8) { alert("Victory Royale! P"+(turn+1)+" wins!"); location.reload(); }
-        if(players[turn].cash < 0) { alert("P"+(turn+1)+" is broke! Game Over."); location.reload(); }
-        turn = (turn + 1) % 3; rollVal = 0;
-        document.getElementById('roll-sec').classList.add('show');
-        refresh();
-    }
-
-    function refresh() {
-        document.querySelectorAll('.p-marker').forEach(m => m.remove());
-        document.querySelectorAll('.square').forEach(s => s.classList.remove('turn-glow'));
-        document.querySelectorAll('.player-status').forEach(s => s.classList.remove('active-status'));
-        document.getElementById('stat' + turn).classList.add('active-status');
-        document.getElementById('sq' + [0, 6, 3][turn]).classList.add('turn-glow');
-        document.getElementById('sq' + players[turn].pos).classList.add('turn-glow');
-        players.forEach((p, i) => {
-            let m = document.createElement('span'); m.className = 'p-marker'; m.innerText = p.char;
-            m.style.left = (i * 15) + "px"; document.getElementById('sq' + p.pos).appendChild(m);
-            document.getElementById(`cash${i}`).innerText = p.cash;
-            document.getElementById(`inv${i}`).innerText = p.items.size;
-            document.getElementById(`icon${i}`).innerText = p.char;
-        });
-        document.getElementById('prompt-msg').innerText = `P${turn+1}'S TURN`;
-    }
+function updateBoard(){
+  document.querySelectorAll('.p-marker').forEach(m=>m.remove());
+  document.querySelectorAll('.sq').forEach(s=>s.classList.remove('correct-dest','my-base-sq'));
+  document.getElementById('sq'+BASE_POS[turn]).classList.add('my-base-sq');
+  if(targetPos>=0) document.getElementById('sq'+targetPos).classList.add('correct-dest');
+  players.forEach((p,i)=>{
+    const m=document.createElement('span');
+    m.className='p-marker'; m.textContent=p.avatar;
+    m.style.left=(i*12)+'px'; document.getElementById('sq'+p.pos).appendChild(m);
+  });
+}
 </script>
 </body>
 </html>
