@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Where are you going?</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #f0f8ff; }
+        #board { font-weight: bold; color: #2c3e50; font-size: 24px; margin: 20px; }
+        button { padding: 10px 20px; font-size: 18px; cursor: pointer; background: #4CAF50; color: white; border: none; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>📍 Where are you going?</h1>
+    <div id="board">Press the button to start!</div>
+    <p id="description"></p>
+    <button onclick="playTurn()">Roll Dice</button>
+
+    <script>
+        const places = ["Park", "Library", "Hospital", "Supermarket", "Bookstore", "Tea Shop", "Post Office", "Zoo"];
+        let currentPos = -1;
+
+        function playTurn() {
+            const roll = Math.floor(Math.random() * 6) + 1;
+            currentPos = (currentPos + roll) % places.length;
+            
+            document.getElementById('board').innerHTML = "You rolled a " + roll + "! <br> You are going to the: " + places[currentPos];
+            
+            const messages = {
+                "Park": "Time to enjoy the fresh air!",
+                "Library": "Shh! Let's find a good book.",
+                "Hospital": "A quick visit to stay healthy.",
+                "Tea Shop": "Enjoy a delicious pearl milk tea!"
+            };
+            document.getElementById('description').innerText = messages[places[currentPos]] || "Have a great trip!";
+        }
+    </script>
+</body>
+</html>
