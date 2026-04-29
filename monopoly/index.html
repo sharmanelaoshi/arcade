@@ -1,89 +1,88 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>3-Player Corner Quest</title>
+    <title>3-Player Monopoly Quest</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { font-family: 'Arial Black', sans-serif; background: #a29bfe; text-align: center; padding: 10px; font-size: 24px; }
+        body { font-family: 'Arial Black', sans-serif; background: #6c5ce7; text-align: center; padding: 10px; font-size: 24px; color: white; }
         
         #setup, #game-ui, #shop-ui, #quest-ui { 
-            background: white; padding: 25px; border-radius: 25px; border: 6px solid #6c5ce7; 
-            margin: 10px auto; max-width: 550px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); 
+            background: white; padding: 25px; border-radius: 25px; border: 6px solid #2d3436; 
+            margin: 10px auto; max-width: 550px; color: #2d3436;
         }
 
         @keyframes flashRed {
             0% { background-color: #ff7675; }
-            100% { background-color: #a29bfe; }
+            100% { background-color: #6c5ce7; }
         }
-        .error-flash { animation: flashRed 0.5s; }
+        .error-flash { animation: flashRed 0.8s; }
 
         .board { 
             display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); 
-            width: 440px; height: 440px; margin: auto; background: white; border: 8px solid #2d3436; gap: 8px; padding: 8px;
+            width: 440px; height: 440px; margin: auto; background: #2d3436; border: 8px solid #2d3436; gap: 8px; padding: 8px;
         }
         
         .square { 
-            border: 3px solid #b2bec3; display: flex; flex-direction: column; 
-            justify-content: center; align-items: center; font-size: 18px; cursor: pointer; 
-            background: #fff; position: relative; font-weight: bold;
+            background: white; border: 2px solid #b2bec3; display: flex; flex-direction: column; 
+            justify-content: center; align-items: center; font-size: 16px; cursor: pointer; 
+            position: relative; font-weight: bold; color: black;
         }
 
-        /* Unique Corners */
-        #s0 { background: #ff7675; color: white; } /* P1 Home */
-        #s3 { background: #55efc4; color: white; } /* P2 Home */
-        #s4 { background: #74b9ff; color: white; } /* P3 Home */
-        #s7 { background: #ffeaa7; }             /* Free Parking */
+        /* The Bases you requested */
+        #s0 { border: 6px solid #ff7675; background: #fff5f5; } /* P1 - Lower Left */
+        #s3 { border: 6px solid #a29bfe; background: #f3f0ff; } /* P3 - Upper Left */
+        #s6 { border: 6px solid #55efc4; background: #f0fff4; } /* P2 - Upper Right */
+        #s9 { background: #dfe6e9; }                          /* Lower Right Corner */
 
-        .middle { grid-column: 2 / 4; grid-row: 2 / 4; background: #6c5ce7; border-radius: 20px; color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        .p-marker { font-size: 45px; position: absolute; transition: all 0.3s; z-index: 50; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+        .middle { grid-column: 2 / 4; grid-row: 2 / 4; background: #fdcb6e; border-radius: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .p-marker { font-size: 45px; position: absolute; transition: all 0.3s; z-index: 50; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
         
-        button { padding: 15px 30px; font-size: 24px; border-radius: 50px; border: none; background: #6c5ce7; color: white; cursor: pointer; font-weight: bold; }
-        button:disabled { background: #b2bec3; }
+        button { padding: 15px 30px; font-size: 24px; border-radius: 50px; border: none; background: #d63031; color: white; cursor: pointer; font-weight: bold; box-shadow: 0 5px #a11b1b; }
+        button:disabled { background: #b2bec3; box-shadow: none; }
 
-        #shop-ui, #quest-ui { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 100; width: 350px; }
-        .player-box { display: inline-block; width: 30%; padding: 10px; border: 4px solid #dfe6e9; border-radius: 20px; font-size: 18px; }
-        .current-turn { border-color: #d63031; background: #ffeaa7; }
+        .player-box { display: inline-block; width: 30%; padding: 10px; border: 4px solid #dfe6e9; border-radius: 20px; font-size: 16px; background: white; color: black; }
+        .current-turn { border-color: #fdcb6e; background: #fff9db; }
     </style>
 </head>
 <body id="main-body">
 
 <div id="setup">
-    <h1>Choose Your Hero</h1>
-    P1 Base: 🔴 <select id="p0-av" style="font-size:25px;"><option>🐱</option><option>🐶</option></select><br>
-    P2 Base: 🟢 <select id="p1-av" style="font-size:25px;"><option>🐰</option><option>🦊</option></select><br>
-    P3 Base: 🔵 <select id="p2-av" style="font-size:25px;"><option>🐯</option><option>🐨</option></select><br><br>
-    <button onclick="startGame()">START QUEST</button>
+    <h1>Game Setup</h1>
+    P1 Base (Low-L): 🔴 <select id="p0-av" style="font-size:20px;"><option>🐱</option><option>🐶</option></select><br>
+    P2 Base (Up-R): 🟢 <select id="p1-av" style="font-size:20px;"><option>🐰</option><option>🦊</option></select><br>
+    P3 Base (Up-L): 🔵 <select id="p2-av" style="font-size:20px;"><option>🐯</option><option>🐨</option></select><br><br>
+    <button onclick="startGame()">START GAME 🏁</button>
 </div>
 
 <div id="game-ui" style="display:none">
     <div id="player-stats">
-        <div class="player-box" id="box-0">P1 <span id="p0-icon"></span><br>$<span id="p0-m">500</span></div>
-        <div class="player-box" id="box-1">P2 <span id="p1-icon"></span><br>$<span id="p1-m">500</span></div>
-        <div class="player-box" id="box-2">P3 <span id="p2-icon"></span><br>$<span id="p2-m">500</span></div>
+        <div class="player-box" id="box-0">P1 <span id="p0-icon"></span><br>$<span id="p0-m">500</span><br>🎒 <span id="p0-c">0</span>/8</div>
+        <div class="player-box" id="box-1">P2 <span id="p1-icon"></span><br>$<span id="p1-m">500</span><br>🎒 <span id="p1-c">0</span>/8</div>
+        <div class="player-box" id="box-2">P3 <span id="p2-icon"></span><br>$<span id="p2-m">500</span><br>🎒 <span id="p2-c">0</span>/8</div>
     </div>
-    <p id="msg" style="font-size: 26px; color: #d63031; font-weight: bold;">P1: Roll to start!</p>
+    <p id="msg" style="color:white; font-size: 26px;">P1: Roll the dice!</p>
 </div>
 
 <div class="board" id="main-board" style="display:none">
-    <div class="square" id="s3" onclick="checkClick(3)">P2 BASE🟢</div>
-    <div class="square" id="s4" onclick="checkClick(4)">P3 BASE🔵</div>
-    <div class="square" id="s5" onclick="checkClick(5)">Bookstore📚</div>
-    <div class="square" id="s6" onclick="checkClick(6)">Hospital🏥</div>
+    <div class="square" id="s3" onclick="checkClick(3)">P3 BASE🔵</div>
+    <div class="square" id="s4" onclick="checkClick(4)">Market🛒</div>
+    <div class="square" id="s5" onclick="checkClick(5)">Clinic🏥</div>
+    <div class="square" id="s6" onclick="checkClick(6)">P2 BASE🟢</div>
     
-    <div class="square" id="s2" onclick="checkClick(2)">Library📖</div>
+    <div class="square" id="s2" onclick="checkClick(2)">Book📚</div>
     <div class="middle">
         <div id="dice-val" style="font-size: 60px;">🎲</div>
         <button id="rollBtn" onclick="roll()">ROLL</button>
     </div>
-    <div class="square" id="s7" onclick="checkClick(7)">FREE🎁</div>
+    <div class="square" id="s7" onclick="checkClick(7)">Post✉️</div>
 
     <div class="square" id="s1" onclick="checkClick(1)">Park🌳</div>
+    <div class="square" id="s8" onclick="checkClick(8)">Tea🧋</div>
+
     <div class="square" id="s0" onclick="checkClick(0)">P1 BASE🔴</div>
     <div class="square" id="s11" onclick="checkClick(11)">Zoo🦁</div>
-    <div class="square" id="s8" onclick="checkClick(8)">Tea Shop🧋</div>
-    
-    <div class="square" id="s10" onclick="checkClick(10)">Market🛒</div>
-    <div class="square" id="s9" onclick="checkClick(9)">Post Office✉️</div>
+    <div class="square" id="s10" onclick="checkClick(10)">Lib📖</div>
+    <div class="square" id="s9" onclick="checkClick(9)">FREE🎁</div>
 </div>
 
 <div id="shop-ui">
@@ -92,28 +91,28 @@
 </div>
 
 <div id="quest-ui">
-    <h2>⚠️ VISITOR QUEST!</h2>
-    <p id="quest-text">You landed on another base!</p>
-    <button onclick="payFee()">Pay $50 Fee</button>
+    <h2 style="color:red">⚠️ VISITOR QUEST!</h2>
+    <p>You landed on another player's base!</p>
+    <button onclick="payFee()" style="background:#d63031">Pay $50 to pass</button>
 </div>
 
 <script>
     let players = [
-        { pos: 0, money: 500, items: new Set(), avatar: '', color: '🔴' },
-        { pos: 3, money: 500, items: new Set(), avatar: '', color: '🟢' },
-        { pos: 4, money: 500, items: new Set(), avatar: '', color: '🔵' }
+        { pos: 0, money: 500, items: new Set(), avatar: '' },
+        { pos: 6, money: 500, items: new Set(), avatar: '' },
+        { pos: 3, money: 500, items: new Set(), avatar: '' }
     ];
     let turn = 0, rollVal = 0, targetPos = -1;
 
     const shops = {
         1: { name: "Park", items: [{n: "Balloon", p: 10}, {n: "Kite", p: 50}] },
-        2: { name: "Library", items: [{n: "Pen", p: 5}, {n: "New Book", p: 40}] },
-        5: { name: "Bookstore", items: [{n: "Comic", p: 30}, {n: "Atlas", p: 120}] },
-        6: { name: "Hospital", items: [{n: "Mask", p: 10}, {n: "Vitamins", p: 60}] },
-        8: { name: "Tea Shop", items: [{n: "Green Tea", p: 35}, {n: "Bubble Tea", p: 75}] },
-        9: { name: "Post Office", items: [{n: "Stamp", p: 5}, {n: "Letter", p: 20}] },
-        10: { name: "Market", items: [{n: "Apple", p: 15}, {n: "Basket", p: 80}] },
-        11: { name: "Zoo", items: [{n: "Ice Cream", p: 25}, {n: "Lion Toy", p: 150}] }
+        2: { name: "Bookstore", items: [{n: "Manga", p: 30}, {n: "Map", p: 100}] },
+        4: { name: "Market", items: [{n: "Apple", p: 15}, {n: "Basket", p: 90}] },
+        5: { name: "Clinic", items: [{n: "Mask", p: 10}, {n: "Medicine", p: 80}] },
+        7: { name: "Post Office", items: [{n: "Stamp", p: 5}, {n: "Card", p: 25}] },
+        8: { name: "Tea Shop", items: [{n: "Green Tea", p: 35}, {n: "Bubble Tea", p: 70}] },
+        10: { name: "Library", items: [{n: "Pen", p: 5}, {n: "Book", p: 40}] },
+        11: { name: "Zoo", items: [{n: "Ice Cream", p: 20}, {n: "Lion Toy", p: 150}] }
     };
 
     function startGame() {
@@ -129,7 +128,7 @@
         rollVal = Math.floor(Math.random() * 6) + 1;
         document.getElementById('dice-val').innerText = rollVal;
         targetPos = (players[turn].pos + rollVal) % 12;
-        document.getElementById('msg').innerText = `Count ${rollVal} and tap!`;
+        document.getElementById('msg').innerText = `P${turn+1}: Count ${rollVal} spaces clockwise!`;
         document.getElementById('rollBtn').disabled = true;
     }
 
@@ -138,8 +137,7 @@
         if (idx === targetPos) {
             if (shops[idx]) {
                 openShop(idx);
-            } else if ((idx === 0 || idx === 3 || idx === 4) && idx !== players[turn].pos) {
-                // Landed on a different player's base!
+            } else if ((idx === 0 || idx === 3 || idx === 6) && idx !== players[turn].pos) {
                 document.getElementById('quest-ui').style.display = 'block';
             } else {
                 players[turn].pos = idx;
@@ -148,7 +146,7 @@
             }
         } else {
             document.getElementById('main-body').classList.add('error-flash');
-            setTimeout(() => document.getElementById('main-body').classList.remove('error-flash'), 500);
+            setTimeout(() => document.getElementById('main-body').classList.remove('error-flash'), 800);
         }
     }
 
@@ -160,7 +158,7 @@
         container.innerHTML = '';
         shop.items.forEach(item => {
             let btn = document.createElement('button');
-            btn.style.width = "90%"; btn.style.margin = "10px";
+            btn.style.width = "95%"; btn.style.margin = "10px";
             btn.innerText = `${item.n} ($${item.p})`;
             btn.onclick = () => {
                 if(players[turn].money >= item.p) {
@@ -169,9 +167,9 @@
                     players[turn].items.add(idx);
                     document.getElementById('shop-ui').style.display = 'none';
                     updateBoard();
-                    if(players[turn].items.size === 8) { alert(players[turn].avatar + " WINS!"); location.reload(); }
+                    if(players[turn].items.size === 8) { alert(players[turn].avatar + " COMPLETED THE QUEST!"); location.reload(); }
                     nextTurn();
-                } else { alert("Not enough money!"); }
+                } else { alert("Too expensive!"); }
             };
             container.appendChild(btn);
         });
@@ -206,9 +204,10 @@
             let s = document.createElement('span');
             s.className = 'p-marker';
             s.innerText = p.avatar;
-            s.style.top = (i * 12) + "px";
+            s.style.left = (i * 15) + "px";
             document.getElementById('s' + p.pos).appendChild(s);
             document.getElementById(`p${i}-m`).innerText = p.money;
+            document.getElementById(`p${i}-c`).innerText = p.items.size;
         });
     }
 </script>
