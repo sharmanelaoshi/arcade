@@ -1,114 +1,102 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>3-Player Monopoly Quest</title>
+    <title>3-Player City Quest</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { font-family: 'Arial Black', sans-serif; background: #6c5ce7; text-align: center; padding: 10px; font-size: 24px; color: white; }
+        body { font-family: 'Arial Black', sans-serif; background: #6c5ce7; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        #setup, #game-ui, #shop-ui, #quest-ui { 
-            background: white; padding: 25px; border-radius: 25px; border: 6px solid #2d3436; 
-            margin: 10px auto; max-width: 550px; color: #2d3436;
-        }
+        /* Top Stats */
+        #top-bar { background: #2d3436; padding: 10px; display: flex; justify-content: space-around; border-bottom: 5px solid #fdcb6e; }
+        .player-box { background: white; padding: 10px; border-radius: 15px; width: 30%; font-size: 16px; border: 4px solid #dfe6e9; }
+        .current-turn { border-color: #fdcb6e; background: #fff9db; transform: scale(1.05); }
 
-        @keyframes flashRed {
-            0% { background-color: #ff7675; }
-            100% { background-color: #6c5ce7; }
-        }
-        .error-flash { animation: flashRed 0.8s; }
+        /* Main Game Layout */
+        #main-container { display: flex; flex: 1; padding: 20px; gap: 20px; justify-content: center; align-items: flex-start; }
 
+        /* The Board (Left Side) */
         .board { 
             display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); 
-            width: 440px; height: 440px; margin: auto; background: #2d3436; border: 8px solid #2d3436; gap: 8px; padding: 8px;
+            width: 440px; height: 440px; background: #2d3436; border: 8px solid #2d3436; gap: 8px; padding: 8px;
         }
-        
-        .square { 
-            background: white; border: 2px solid #b2bec3; display: flex; flex-direction: column; 
-            justify-content: center; align-items: center; font-size: 16px; cursor: pointer; 
-            position: relative; font-weight: bold; color: black;
-        }
-
-        /* The Bases you requested */
-        #s0 { border: 6px solid #ff7675; background: #fff5f5; } /* P1 - Lower Left */
-        #s3 { border: 6px solid #a29bfe; background: #f3f0ff; } /* P3 - Upper Left */
-        #s6 { border: 6px solid #55efc4; background: #f0fff4; } /* P2 - Upper Right */
-        #s9 { background: #dfe6e9; }                          /* Lower Right Corner */
-
+        .square { background: white; border: 2px solid #b2bec3; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 15px; cursor: pointer; position: relative; font-weight: bold; }
+        #s0 { border: 5px solid #ff7675; } #s6 { border: 5px solid #55efc4; } #s3 { border: 5px solid #74b9ff; }
         .middle { grid-column: 2 / 4; grid-row: 2 / 4; background: #fdcb6e; border-radius: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        .p-marker { font-size: 45px; position: absolute; transition: all 0.3s; z-index: 50; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
-        
-        button { padding: 15px 30px; font-size: 24px; border-radius: 50px; border: none; background: #d63031; color: white; cursor: pointer; font-weight: bold; box-shadow: 0 5px #a11b1b; }
-        button:disabled { background: #b2bec3; box-shadow: none; }
+        .p-marker { font-size: 45px; position: absolute; transition: 0.3s; z-index: 50; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
 
-        .player-box { display: inline-block; width: 30%; padding: 10px; border: 4px solid #dfe6e9; border-radius: 20px; font-size: 16px; background: white; color: black; }
-        .current-turn { border-color: #fdcb6e; background: #fff9db; }
+        /* Interaction Panel (Right Side) */
+        #side-panel { background: white; width: 320px; border-radius: 25px; border: 6px solid #2d3436; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        #msg { color: white; font-size: 22px; margin-bottom: 10px; background: #d63031; padding: 10px; border-radius: 10px; width: 90%; }
+        
+        button { padding: 15px 30px; font-size: 22px; border-radius: 50px; border: none; background: #0984e3; color: white; cursor: pointer; font-weight: bold; width: 100%; margin: 5px 0; }
+        .btn-buy { background: #00b894; font-size: 18px; }
+        .btn-pay { background: #d63031; }
+
+        #setup-overlay { position: fixed; inset: 0; background: #6c5ce7; z-index: 200; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .error-flash { animation: flashRed 0.8s; }
+        @keyframes flashRed { 0% { background: #ff7675; } 100% { background: #6c5ce7; } }
     </style>
 </head>
 <body id="main-body">
 
-<div id="setup">
-    <h1>Game Setup</h1>
-    P1 Base (Low-L): 🔴 <select id="p0-av" style="font-size:20px;"><option>🐱</option><option>🐶</option></select><br>
-    P2 Base (Up-R): 🟢 <select id="p1-av" style="font-size:20px;"><option>🐰</option><option>🦊</option></select><br>
-    P3 Base (Up-L): 🔵 <select id="p2-av" style="font-size:20px;"><option>🐯</option><option>🐨</option></select><br><br>
-    <button onclick="startGame()">START GAME 🏁</button>
-</div>
-
-<div id="game-ui" style="display:none">
-    <div id="player-stats">
-        <div class="player-box" id="box-0">P1 <span id="p0-icon"></span><br>$<span id="p0-m">500</span><br>🎒 <span id="p0-c">0</span>/8</div>
-        <div class="player-box" id="box-1">P2 <span id="p1-icon"></span><br>$<span id="p1-m">500</span><br>🎒 <span id="p1-c">0</span>/8</div>
-        <div class="player-box" id="box-2">P3 <span id="p2-icon"></span><br>$<span id="p2-m">500</span><br>🎒 <span id="p2-c">0</span>/8</div>
+<div id="setup-overlay">
+    <div style="background:white; padding:40px; border-radius:30px; border:8px solid #2d3436;">
+        <h1>Game Setup</h1>
+        P1 (Low-L): 🔴 <select id="p0-av" style="font-size:20px;"><option>🐱</option><option>🐶</option></select><br><br>
+        P2 (Up-R): 🟢 <select id="p1-av" style="font-size:20px;"><option>🐰</option><option>🦊</option></select><br><br>
+        P3 (Up-L): 🔵 <select id="p2-av" style="font-size:20px;"><option>🐯</option><option>🐨</option></select><br><br>
+        <button onclick="startGame()">START QUEST 🏁</button>
     </div>
-    <p id="msg" style="color:white; font-size: 26px;">P1: Roll the dice!</p>
 </div>
 
-<div class="board" id="main-board" style="display:none">
-    <div class="square" id="s3" onclick="checkClick(3)">P3 BASE🔵</div>
-    <div class="square" id="s4" onclick="checkClick(4)">Market🛒</div>
-    <div class="square" id="s5" onclick="checkClick(5)">Clinic🏥</div>
-    <div class="square" id="s6" onclick="checkClick(6)">P2 BASE🟢</div>
-    
-    <div class="square" id="s2" onclick="checkClick(2)">Book📚</div>
-    <div class="middle">
-        <div id="dice-val" style="font-size: 60px;">🎲</div>
-        <button id="rollBtn" onclick="roll()">ROLL</button>
+<div id="top-bar">
+    <div class="player-box" id="box-0">P1 <span id="p0-icon"></span><br>$<span id="p0-m">500</span> | 🎒 <span id="p0-c">0</span>/8</div>
+    <div class="player-box" id="box-1">P2 <span id="p1-icon"></span><br>$<span id="p1-m">500</span> | 🎒 <span id="p1-c">0</span>/8</div>
+    <div class="player-box" id="box-2">P3 <span id="p2-icon"></span><br>$<span id="p2-m">500</span> | 🎒 <span id="p2-c">0</span>/8</div>
+</div>
+
+<div id="main-container">
+    <div class="board">
+        <div class="square" id="s3" onclick="checkClick(3)">P3 BASE🔵</div>
+        <div class="square" id="s4" onclick="checkClick(4)">Market🛒</div>
+        <div class="square" id="s5" onclick="checkClick(5)">Clinic🏥</div>
+        <div class="square" id="s6" onclick="checkClick(6)">P2 BASE🟢</div>
+        <div class="square" id="s2" onclick="checkClick(2)">Book📚</div>
+        <div class="middle"><div id="dice-val" style="font-size:70px;">🎲</div></div>
+        <div class="square" id="s7" onclick="checkClick(7)">Post✉️</div>
+        <div class="square" id="s1" onclick="checkClick(1)">Park🌳</div>
+        <div class="square" id="s8" onclick="checkClick(8)">Tea🧋</div>
+        <div class="square" id="s0" onclick="checkClick(0)">P1 BASE🔴</div>
+        <div class="square" id="s11" onclick="checkClick(11)">Zoo🦁</div>
+        <div class="square" id="s10" onclick="checkClick(10)">Lib📖</div>
+        <div class="square" id="s9" onclick="checkClick(9)">FREE🎁</div>
     </div>
-    <div class="square" id="s7" onclick="checkClick(7)">Post✉️</div>
 
-    <div class="square" id="s1" onclick="checkClick(1)">Park🌳</div>
-    <div class="square" id="s8" onclick="checkClick(8)">Tea🧋</div>
+    <div id="side-panel">
+        <div id="msg">P1: Roll to start!</div>
+        <button id="rollBtn" onclick="roll()">ROLL DICE 🎲</button>
+        
+        <div id="shop-area" style="display:none; width:100%; text-align:center;">
+            <h2 id="shop-name" style="margin:10px 0;">Shop</h2>
+            <div id="shop-options"></div>
+        </div>
 
-    <div class="square" id="s0" onclick="checkClick(0)">P1 BASE🔴</div>
-    <div class="square" id="s11" onclick="checkClick(11)">Zoo🦁</div>
-    <div class="square" id="s10" onclick="checkClick(10)">Lib📖</div>
-    <div class="square" id="s9" onclick="checkClick(9)">FREE🎁</div>
-</div>
-
-<div id="shop-ui">
-    <h2 id="shop-name">Shop</h2>
-    <div id="shop-options"></div>
-</div>
-
-<div id="quest-ui">
-    <h2 style="color:red">⚠️ VISITOR QUEST!</h2>
-    <p>You landed on another player's base!</p>
-    <button onclick="payFee()" style="background:#d63031">Pay $50 to pass</button>
+        <div id="quest-area" style="display:none; width:100%; text-align:center;">
+            <h2 style="color:red;">⚠️ VISITOR QUEST</h2>
+            <p style="font-size:16px;">Pay $50 to pass through this base!</p>
+            <button class="btn-pay" onclick="payFee()">PAY $50 💸</button>
+        </div>
+    </div>
 </div>
 
 <script>
-    let players = [
-        { pos: 0, money: 500, items: new Set(), avatar: '' },
-        { pos: 6, money: 500, items: new Set(), avatar: '' },
-        { pos: 3, money: 500, items: new Set(), avatar: '' }
-    ];
+    let players = [{pos:0, money:500, items:new Set(), avatar:''}, {pos:6, money:500, items:new Set(), avatar:''}, {pos:3, money:500, items:new Set(), avatar:''}];
     let turn = 0, rollVal = 0, targetPos = -1;
-
     const shops = {
         1: { name: "Park", items: [{n: "Balloon", p: 10}, {n: "Kite", p: 50}] },
         2: { name: "Bookstore", items: [{n: "Manga", p: 30}, {n: "Map", p: 100}] },
         4: { name: "Market", items: [{n: "Apple", p: 15}, {n: "Basket", p: 90}] },
-        5: { name: "Clinic", items: [{n: "Mask", p: 10}, {n: "Medicine", p: 80}] },
+        5: { name: "Clinic", items: [{n: "Mask", p: 10}, {n: "Check-up", p: 80}] },
         7: { name: "Post Office", items: [{n: "Stamp", p: 5}, {n: "Card", p: 25}] },
         8: { name: "Tea Shop", items: [{n: "Green Tea", p: 35}, {n: "Bubble Tea", p: 70}] },
         10: { name: "Library", items: [{n: "Pen", p: 5}, {n: "Book", p: 40}] },
@@ -117,18 +105,15 @@
 
     function startGame() {
         for(let i=0; i<3; i++) players[i].avatar = document.getElementById(`p${i}-av`).value;
-        document.getElementById('setup').style.display = 'none';
-        document.getElementById('game-ui').style.display = 'block';
-        document.getElementById('main-board').style.display = 'grid';
-        updateBoard();
-        updateTurnUI();
+        document.getElementById('setup-overlay').style.display = 'none';
+        updateBoard(); updateTurnUI();
     }
 
     function roll() {
         rollVal = Math.floor(Math.random() * 6) + 1;
         document.getElementById('dice-val').innerText = rollVal;
         targetPos = (players[turn].pos + rollVal) % 12;
-        document.getElementById('msg').innerText = `P${turn+1}: Count ${rollVal} spaces clockwise!`;
+        document.getElementById('msg').innerText = `Count ${rollVal} spaces!`;
         document.getElementById('rollBtn').disabled = true;
     }
 
@@ -136,13 +121,21 @@
         if (rollVal === 0) return;
         if (idx === targetPos) {
             if (shops[idx]) {
-                openShop(idx);
-            } else if ((idx === 0 || idx === 3 || idx === 6) && idx !== players[turn].pos) {
-                document.getElementById('quest-ui').style.display = 'block';
+                document.getElementById('shop-area').style.display = 'block';
+                document.getElementById('shop-name').innerText = shops[idx].name;
+                const container = document.getElementById('shop-options');
+                container.innerHTML = '';
+                shops[idx].items.forEach(item => {
+                    let btn = document.createElement('button');
+                    btn.className = 'btn-buy';
+                    btn.innerText = `${item.n} ($${item.p})`;
+                    btn.onclick = () => buyItem(idx, item.p);
+                    container.appendChild(btn);
+                });
+            } else if ([0,3,6].includes(idx) && idx !== players[turn].pos) {
+                document.getElementById('quest-area').style.display = 'block';
             } else {
-                players[turn].pos = idx;
-                updateBoard();
-                nextTurn();
+                players[turn].pos = idx; updateBoard(); nextTurn();
             }
         } else {
             document.getElementById('main-body').classList.add('error-flash');
@@ -150,45 +143,24 @@
         }
     }
 
-    function openShop(idx) {
-        const shop = shops[idx];
-        document.getElementById('shop-ui').style.display = 'block';
-        document.getElementById('shop-name').innerText = shop.name;
-        const container = document.getElementById('shop-options');
-        container.innerHTML = '';
-        shop.items.forEach(item => {
-            let btn = document.createElement('button');
-            btn.style.width = "95%"; btn.style.margin = "10px";
-            btn.innerText = `${item.n} ($${item.p})`;
-            btn.onclick = () => {
-                if(players[turn].money >= item.p) {
-                    players[turn].money -= item.p;
-                    players[turn].pos = idx;
-                    players[turn].items.add(idx);
-                    document.getElementById('shop-ui').style.display = 'none';
-                    updateBoard();
-                    if(players[turn].items.size === 8) { alert(players[turn].avatar + " COMPLETED THE QUEST!"); location.reload(); }
-                    nextTurn();
-                } else { alert("Too expensive!"); }
-            };
-            container.appendChild(btn);
-        });
+    function buyItem(idx, cost) {
+        let p = players[turn];
+        if (p.money >= cost) {
+            p.money -= cost; p.pos = idx; p.items.add(idx);
+            document.getElementById('shop-area').style.display = 'none';
+            updateBoard();
+            if(p.items.size === 8) { alert(p.avatar + " WINS!"); location.reload(); }
+            nextTurn();
+        } else { alert("Not enough money!"); }
     }
 
     function payFee() {
-        players[turn].money -= 50;
-        players[turn].pos = targetPos;
-        document.getElementById('quest-ui').style.display = 'none';
-        updateBoard();
-        nextTurn();
+        players[turn].money -= 50; players[turn].pos = targetPos;
+        document.getElementById('quest-area').style.display = 'none';
+        updateBoard(); nextTurn();
     }
 
-    function nextTurn() {
-        turn = (turn + 1) % 3;
-        rollVal = 0;
-        document.getElementById('rollBtn').disabled = false;
-        updateTurnUI();
-    }
+    function nextTurn() { turn = (turn + 1) % 3; rollVal = 0; document.getElementById('rollBtn').disabled = false; updateTurnUI(); }
 
     function updateTurnUI() {
         for(let i=0; i<3; i++) {
@@ -201,13 +173,9 @@
     function updateBoard() {
         document.querySelectorAll('.p-marker').forEach(m => m.remove());
         players.forEach((p, i) => {
-            let s = document.createElement('span');
-            s.className = 'p-marker';
-            s.innerText = p.avatar;
-            s.style.left = (i * 15) + "px";
-            document.getElementById('s' + p.pos).appendChild(s);
-            document.getElementById(`p${i}-m`).innerText = p.money;
-            document.getElementById(`p${i}-c`).innerText = p.items.size;
+            let s = document.createElement('span'); s.className = 'p-marker'; s.innerText = p.avatar;
+            s.style.left = (i * 15) + "px"; document.getElementById('s' + p.pos).appendChild(s);
+            document.getElementById(`p${i}-m`).innerText = p.money; document.getElementById(`p${i}-c`).innerText = p.items.size;
         });
     }
 </script>
